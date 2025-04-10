@@ -1,0 +1,22 @@
+[workspace]
+members = ["ibm-quantum-platform-api"]
+resolver = "2"
+
+[package]
+name = "qiskit-ibm-runtime"
+version = "0.38.0"
+readme = "README.md"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[workspace.package]
+edition = "2021"
+rust-version = "1.79"
+license = "Apache-2.0"
+
+[dependencies]
+
+[profile.release]
+lto = 'fat'
+codegen-units = 1

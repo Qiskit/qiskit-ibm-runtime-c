@@ -1,0 +1,15 @@
+[package]
+name = "ibm-quantum-platform-api"
+version = "0.21.2"
+authors = ["Qiskit Team"]
+description = "Generated API from the Qiskit Runtime API OpenAPI spec"
+license = "Apache-2.0"
+edition = "2021"
+
+[dependencies]
+serde = { version = "^1.0", features = ["derive"] }
+serde_with = { version = "^3.8", default-features = false, features = ["base64", "std", "macros"] }
+serde_json = "^1.0"
+serde_repr = "^0.1"
+url = "^2.5"
+reqwest = { version = "^0.12", features = ["json", "multipart"] }
