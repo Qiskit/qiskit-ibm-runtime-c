@@ -26,6 +26,12 @@ pub struct FileHeaderV14 {
     pub symbolic_encoding: u8,
 }
 
+#[derive(BinWrite)]
+#[brw(big)]
+pub struct ProgramType {
+    pub type_key: u8,
+}
+
 /// The overall structure of the QPY file
 #[derive(BinWrite)]
 #[brw(big)]
@@ -115,7 +121,7 @@ pub struct CustomCircuitInstructionDefPack {
     pub base_gate_size: u64,
     pub name_raw: Bytes,
     pub data: Bytes,
-    pub base_gate_raw: Bytes
+    pub base_gate_raw: Bytes,
 }
 
 #[derive(BinWrite)]
@@ -178,10 +184,10 @@ pub struct ParameterPack {
 }
 
 // PARAMETER_VECTOR_ELEMENT = namedtuple(
-    //     "PARAMETER_VECTOR_ELEMENT", ["vector_name_size", "vector_size", "uuid", "index"]
-    // )
-    // PARAMETER_VECTOR_ELEMENT_PACK = "!HQ16sQ"
-    // PARAMETER_VECTOR_ELEMENT_SIZE = struct.calcsize(PARAMETER_VECTOR_ELEMENT_PACK)
+//     "PARAMETER_VECTOR_ELEMENT", ["vector_name_size", "vector_size", "uuid", "index"]
+// )
+// PARAMETER_VECTOR_ELEMENT_PACK = "!HQ16sQ"
+// PARAMETER_VECTOR_ELEMENT_SIZE = struct.calcsize(PARAMETER_VECTOR_ELEMENT_PACK)
 
 #[derive(BinWrite)]
 #[brw(big)]
@@ -193,7 +199,7 @@ pub struct ParameterVectorPack {
     pub index: u64,
     pub name_bytes: Bytes,
 }
-    
+
 #[derive(BinWrite)]
 #[brw(big)]
 #[derive(Debug)]
@@ -264,9 +270,8 @@ pub struct SparsePauliOpListElemPack {
 #[derive(Debug)]
 pub struct MappingPack {
     pub num_elements: u64,
-    pub items: Vec<MappingItem>,    
+    pub items: Vec<MappingItem>,
 }
-
 
 #[derive(BinWrite)]
 #[brw(big)]
@@ -274,7 +279,7 @@ pub struct MappingPack {
 pub struct MappingItem {
     pub item_header: MappingItemHeader,
     pub key_bytes: Bytes,
-    pub item_bytes: Bytes
+    pub item_bytes: Bytes,
 }
 
 #[derive(BinWrite)]
