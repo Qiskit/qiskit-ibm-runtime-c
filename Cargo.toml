@@ -16,6 +16,7 @@ rust-version = "1.79"
 license = "Apache-2.0"
 
 [dependencies]
+binrw = "0.13"
 
 [profile.release]
 lto = 'fat'
