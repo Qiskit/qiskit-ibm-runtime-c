@@ -1,12 +1,13 @@
-use std::io::prelude::*;
 use crate::generate_qpy;
 use crate::qiskit_circuit;
-use flate2::Compression;
 use flate2::write::ZlibEncoder;
+use flate2::Compression;
 use ibm_quantum_platform_api;
+use std::io::prelude::*;
 
-
-pub fn generate_single_pubs_payload(circuit: &qiskit_circuit::Circuit) -> Vec<ibm_quantum_platform_api::models::SamplerV2InputPubsInner> {
+pub fn generate_single_pubs_payload(
+    circuit: &qiskit_circuit::Circuit,
+) -> Vec<ibm_quantum_platform_api::models::SamplerV2InputPubsInner> {
     let base64 = base64_simd::STANDARD;
     let qpy = generate_qpy::generate_qpy_payload(circuit).unwrap();
     let mut compress = ZlibEncoder::new(Vec::new(), Compression::default());
@@ -16,7 +17,13 @@ pub fn generate_single_pubs_payload(circuit: &qiskit_circuit::Circuit) -> Vec<ib
     vec![ibm_quantum_platform_api::models::SamplerV2InputPubsInner::new(encoded_circuit)]
 }
 
-pub fn create_sampler_job_payload(circuit: &qiskit_circuit::Circuit, backend: String, shots: Option<i32>, runtime: Option<String>, tags: Option<Vec<String>>) -> ibm_quantum_platform_api::models::CreateJobRequestOneOf {
+pub fn create_sampler_job_payload(
+    circuit: &qiskit_circuit::Circuit,
+    backend: String,
+    shots: Option<i32>,
+    runtime: Option<String>,
+    tags: Option<Vec<String>>,
+) -> ibm_quantum_platform_api::models::CreateJobRequestOneOf {
     let pubs = generate_single_pubs_payload(circuit);
     let sampler_input = ibm_quantum_platform_api::models::SamplerV2Input {
         pubs,
@@ -25,7 +32,11 @@ pub fn create_sampler_job_payload(circuit: &qiskit_circuit::Circuit, backend: St
         support_qiskit: Some(true),
         version: None,
     };
-    let params = Box::new(ibm_quantum_platform_api::models::CreateJobRequestOneOfAllOfParams::SamplerV2Input(Box::new(sampler_input)));
+    let params = Box::new(
+        ibm_quantum_platform_api::models::CreateJobRequestOneOfAllOfParams::SamplerV2Input(
+            Box::new(sampler_input),
+        ),
+    );
     ibm_quantum_platform_api::models::CreateJobRequestOneOf {
         program_id: "sampler".to_string(),
         backend,
