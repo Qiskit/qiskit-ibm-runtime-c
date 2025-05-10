@@ -1,10 +1,9 @@
 [package]
-name = "openapi"
-version = "0.23.1"
-authors = ["OpenAPI Generator team and contributors"]
-description = "The Qiskit Runtime API description"
-# Override this license by providing a License Object in the OpenAPI.
-license = "Unlicense"
+name = "ibm-quantum-platform-api"
+version = "0.21.2"
+authors = ["Qiskit Team"]
+description = "Generated API from the Qiskit Runtime API OpenAPI spec"
+license = "Apache-2.0"
 edition = "2021"
 
 [dependencies]

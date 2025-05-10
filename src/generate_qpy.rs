@@ -1,5 +1,5 @@
 use binrw::{BinResult, BinWrite};
-use std::io::{Cursor, Write};
+use std::io::Cursor;
 
 use crate::qiskit_circuit;
 use crate::qpy_formats;

@@ -13,11 +13,15 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct SamplerV2InputPubsInner {
+    __type__: String,
+    __value__: String,
 }
 
 impl SamplerV2InputPubsInner {
-    pub fn new() -> SamplerV2InputPubsInner {
+    pub fn new(qpy_string: String) -> SamplerV2InputPubsInner {
         SamplerV2InputPubsInner {
+            __type__: "QuantumCircuit".to_string(),
+            __value__: qpy_string,
         }
     }
 }
