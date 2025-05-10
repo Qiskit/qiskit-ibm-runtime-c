@@ -54,7 +54,7 @@ pub fn generate_qpy_payload(circuit: &qiskit_circuit::Circuit) -> BinResult<Vec<
             .map(|inst| {
                 let out_name = match inst.name.as_str() {
                     "x" => "XGate",
-                    "sx" => "SxGate",
+                    "sx" => "SXGate",
                     "cz" => "CZGate",
                     "measure" => "Measure",
                     "reset" => "Reset",
