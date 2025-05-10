@@ -2,7 +2,6 @@ use crate::generate_qpy;
 use crate::qiskit_circuit;
 use flate2::write::ZlibEncoder;
 use flate2::Compression;
-use ibm_quantum_platform_api;
 use std::io::prelude::*;
 
 pub fn generate_single_pubs_payload(
