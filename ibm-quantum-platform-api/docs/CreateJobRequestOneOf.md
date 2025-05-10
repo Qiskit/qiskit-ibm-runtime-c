@@ -11,7 +11,7 @@ Name | Type | Description | Notes
 **log_level** | Option<**String**> | Logging level of the program | [optional]
 **cost** | Option<**i32**> | Cost of the job as the estimated time it should take to complete (in seconds). Should not exceed the cost of the program | [optional]
 **session_id** | Option<**String**> | Identifier of the session that the job is a part of | [optional]
-**params** | Option<[**std::collections::HashMap<String, serde_json::Value>**](serde_json::Value.md)> | Parameters to inject into the program as key-value pairs | [optional]
+**params** | Option<[**models::CreateJobRequestOneOfAllOfParams**](create_job_request_oneOf_allOf_params.md)> |  | [optional]
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

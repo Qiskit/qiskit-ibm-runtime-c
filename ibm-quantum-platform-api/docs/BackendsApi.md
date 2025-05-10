@@ -25,7 +25,7 @@ Returns the configuration for the specified backend.
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **id** | **String** | Identifier of an available backend | [required] |
-**ibm_api_version** | Option<**String**> |  |  |[default to 2025-01-01]
+**ibm_api_version** | Option<**String**> |  |  |[default to 2025-05-01]
 
 ### Return type
 
@@ -56,7 +56,7 @@ Returns the defaults for the specified backend. Simulator backends may not suppo
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **id** | **String** | Identifier of an available backend | [required] |
-**ibm_api_version** | Option<**String**> |  |  |[default to 2025-01-01]
+**ibm_api_version** | Option<**String**> |  |  |[default to 2025-05-01]
 
 ### Return type
 
@@ -87,7 +87,7 @@ Returns the properties for the specified backend. Simulator backends may not sup
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **id** | **String** | Identifier of an available backend | [required] |
-**ibm_api_version** | Option<**String**> |  |  |[default to 2025-01-01]
+**ibm_api_version** | Option<**String**> |  |  |[default to 2025-05-01]
 **updated_before** | Option<**String**> | Returns properties with last_update_date before the given time |  |
 
 ### Return type
@@ -119,7 +119,7 @@ Returns the status for the specified backend ID.
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **id** | **String** | Identifier of an available backend | [required] |
-**ibm_api_version** | Option<**String**> |  |  |[default to 2025-01-01]
+**ibm_api_version** | Option<**String**> |  |  |[default to 2025-05-01]
 
 ### Return type
 
@@ -139,7 +139,7 @@ Name | Type | Description  | Required | Notes
 
 ## list_backends
 
-> models::ListBackends200Response list_backends(ibm_api_version)
+> models::BackendsResponseV2 list_backends(ibm_api_version)
 List your backends
 
 Returns a list of all the backends your service instance has access to. <br/><br/> This endpoint returns different response schemas depending on the value of the `IBM-API-Version` header.<br/><br/> - If `IBM-API-Version` is `2024-01-01` or omitted, the response will follow `BackendsResponse`.<br/> - If `IBM-API-Version` is `2025-01-01` or greater, the response will follow `BackendsResponseV2`. 
@@ -153,7 +153,7 @@ Name | Type | Description  | Required | Notes
 
 ### Return type
 
-[**models::ListBackends200Response**](list_backends_200_response.md)
+[**models::BackendsResponseV2**](BackendsResponseV2.md)
 
 ### Authorization
 

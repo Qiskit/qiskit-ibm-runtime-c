@@ -23,7 +23,7 @@ Create a session
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**ibm_api_version** | Option<**String**> |  |  |[default to 2025-01-01]
+**ibm_api_version** | Option<**String**> |  |  |[default to 2025-05-01]
 **create_session_request** | Option<[**CreateSessionRequest**](CreateSessionRequest.md)> |  |  |
 
 ### Return type
@@ -55,7 +55,7 @@ Closes the runtime session
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **id** | **String** | Session Id | [required] |
-**ibm_api_version** | Option<**String**> |  |  |[default to 2025-01-01]
+**ibm_api_version** | Option<**String**> |  |  |[default to 2025-05-01]
 
 ### Return type
 
@@ -86,7 +86,7 @@ Get a session
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **id** | **String** | Job Session ID | [required] |
-**ibm_api_version** | Option<**String**> |  |  |[default to 2025-01-01]
+**ibm_api_version** | Option<**String**> |  |  |[default to 2025-05-01]
 
 ### Return type
 
@@ -117,7 +117,7 @@ Update a session
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **id** | **String** | Job Session ID | [required] |
-**ibm_api_version** | Option<**String**> |  |  |[default to 2025-01-01]
+**ibm_api_version** | Option<**String**> |  |  |[default to 2025-05-01]
 **update_session_state_request** | Option<[**UpdateSessionStateRequest**](UpdateSessionStateRequest.md)> |  |  |
 
 ### Return type

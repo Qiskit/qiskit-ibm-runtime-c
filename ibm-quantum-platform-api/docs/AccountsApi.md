@@ -21,7 +21,7 @@ Get the current account information. If no account information is found, returns
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **id** | **String** | Account id (without `a/` prefix) | [required] |
-**ibm_api_version** | Option<**String**> |  |  |[default to 2025-01-01]
+**ibm_api_version** | Option<**String**> |  |  |[default to 2025-05-01]
 **plan_id** | Option<**String**> | Obtain the account configuration only for the specified plan |  |
 
 ### Return type

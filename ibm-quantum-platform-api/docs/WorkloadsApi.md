@@ -20,7 +20,7 @@ List user instance workloads
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**ibm_api_version** | Option<**String**> |  |  |[default to 2025-01-01]
+**ibm_api_version** | Option<**String**> |  |  |[default to 2025-05-01]
 **sort** | Option<**String**> | Field to sort the workloads by. A `-` prefix indicates descending sort order. |  |[default to createdAt]
 **limit** | Option<**f64**> | Number of workloads to return at a time |  |[default to 10]
 **previous** | Option<**String**> | Cursor to previous workloads result page |  |

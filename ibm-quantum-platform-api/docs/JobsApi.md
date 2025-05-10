@@ -32,7 +32,7 @@ Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **id** | **String** | A job ID | [required] |
 **parent_job_id** | Option<**String**> | Parent job ID |  |
-**ibm_api_version** | Option<**String**> |  |  |[default to 2025-01-01]
+**ibm_api_version** | Option<**String**> |  |  |[default to 2025-05-01]
 
 ### Return type
 
@@ -62,7 +62,7 @@ Invoke a Qiskit Runtime primitive. Note the returned job ID.  You will use it to
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**ibm_api_version** | Option<**String**> |  |  |[default to 2025-01-01]
+**ibm_api_version** | Option<**String**> |  |  |[default to 2025-05-01]
 **parent_job_id** | Option<**String**> | Parent job ID |  |
 **create_job_request** | Option<[**CreateJobRequest**](CreateJobRequest.md)> |  |  |
 
@@ -95,7 +95,7 @@ Delete the specified job and its associated data. Job must be in a terminal stat
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **id** | **String** | Identifier of an existing job | [required] |
-**ibm_api_version** | Option<**String**> |  |  |[default to 2025-01-01]
+**ibm_api_version** | Option<**String**> |  |  |[default to 2025-05-01]
 
 ### Return type
 
@@ -126,7 +126,7 @@ Return the interim results from this job. Interim results are kept two days afte
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **id** | **String** | A job ID | [required] |
-**ibm_api_version** | Option<**String**> |  |  |[default to 2025-01-01]
+**ibm_api_version** | Option<**String**> |  |  |[default to 2025-05-01]
 
 ### Return type
 
@@ -157,7 +157,7 @@ List the details about the specified quantum program job.
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **id** | **String** | Identifier of an existing job | [required] |
-**ibm_api_version** | Option<**String**> |  |  |[default to 2025-01-01]
+**ibm_api_version** | Option<**String**> |  |  |[default to 2025-05-01]
 **exclude_params** | Option<**bool**> | Exclude job params from the response |  |[default to false]
 
 ### Return type
@@ -189,7 +189,7 @@ Gets metrics of specified job
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **id** | **String** | A job ID | [required] |
-**ibm_api_version** | Option<**String**> |  |  |[default to 2025-01-01]
+**ibm_api_version** | Option<**String**> |  |  |[default to 2025-05-01]
 
 ### Return type
 
@@ -220,7 +220,7 @@ Return the final result from this job.
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **id** | **String** | A job ID | [required] |
-**ibm_api_version** | Option<**String**> |  |  |[default to 2025-01-01]
+**ibm_api_version** | Option<**String**> |  |  |[default to 2025-05-01]
 
 ### Return type
 
@@ -251,7 +251,7 @@ List all job logs for the specified job.
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **id** | **String** | A job ID | [required] |
-**ibm_api_version** | Option<**String**> |  |  |[default to 2025-01-01]
+**ibm_api_version** | Option<**String**> |  |  |[default to 2025-05-01]
 
 ### Return type
 
@@ -282,7 +282,7 @@ Return a presigned download URL for the transpiled circuits. Currently supported
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **id** | **String** | A job ID | [required] |
-**ibm_api_version** | Option<**String**> |  |  |[default to 2025-01-01]
+**ibm_api_version** | Option<**String**> |  |  |[default to 2025-05-01]
 
 ### Return type
 
@@ -312,7 +312,7 @@ List the quantum program jobs you have run.
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**ibm_api_version** | Option<**String**> |  |  |[default to 2025-01-01]
+**ibm_api_version** | Option<**String**> |  |  |[default to 2025-05-01]
 **limit** | Option<**i32**> | Number of results to return at a time |  |[default to 200]
 **offset** | Option<**i32**> | Number of results to offset when retrieving the list of jobs |  |
 **pending** | Option<**bool**> | Returns 'Queued' and 'Running' jobs if true.  Returns 'Completed', 'Cancelled', and 'Failed' jobs if false. |  |
@@ -354,7 +354,7 @@ Replace job tags
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **id** | **String** | A job ID | [required] |
-**ibm_api_version** | Option<**String**> |  |  |[default to 2025-01-01]
+**ibm_api_version** | Option<**String**> |  |  |[default to 2025-05-01]
 **replace_job_tags_request** | Option<[**ReplaceJobTagsRequest**](ReplaceJobTagsRequest.md)> |  |  |
 
 ### Return type

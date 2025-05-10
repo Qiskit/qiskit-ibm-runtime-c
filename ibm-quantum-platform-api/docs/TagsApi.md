@@ -22,7 +22,7 @@ Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **r#type** | **String** | Searches for tags in the specified type. | [required] |[default to job]
 **search** | **String** | Used for searching tags. | [required] |
-**ibm_api_version** | Option<**String**> |  |  |[default to 2025-01-01]
+**ibm_api_version** | Option<**String**> |  |  |[default to 2025-05-01]
 
 ### Return type
 

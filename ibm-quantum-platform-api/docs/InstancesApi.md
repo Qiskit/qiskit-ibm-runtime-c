@@ -6,6 +6,7 @@ Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**get_instance**](InstancesApi.md#get_instance) | **GET** /v1/instance | Get current instance details
 [**get_instance_configuration**](InstancesApi.md#get_instance_configuration) | **GET** /v1/instances/configuration | Get instance configuration
+[**get_usage**](InstancesApi.md#get_usage) | **GET** /v1/instances/usage | Get instance usage
 [**replace_instance_data**](InstancesApi.md#replace_instance_data) | **PUT** /v1/instances/configuration | Update instance configuration
 
 
@@ -22,7 +23,7 @@ Returns the details of the current logged in instance, using CRN from the reques
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**ibm_api_version** | Option<**String**> |  |  |[default to 2025-01-01]
+**ibm_api_version** | Option<**String**> |  |  |[default to 2025-05-01]
 
 ### Return type
 
@@ -52,11 +53,41 @@ Returns the configuration for the specified instance e.g. instance limit in seco
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**ibm_api_version** | Option<**String**> |  |  |[default to 2025-01-01]
+**ibm_api_version** | Option<**String**> |  |  |[default to 2025-05-01]
 
 ### Return type
 
 [**models::GetInstanceConfiguration200Response**](get_instance_configuration_200_response.md)
+
+### Authorization
+
+[IBMCloudAuth](../README.md#IBMCloudAuth), [IBMCloudAPIKey](../README.md#IBMCloudAPIKey), [Backend-Authentication](../README.md#Backend-Authentication), [external-service-token](../README.md#external-service-token), [ServiceCRN](../README.md#ServiceCRN)
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
+## get_usage
+
+> models::GetUsage200Response get_usage(ibm_api_version)
+Get instance usage
+
+Get instance usage
+
+### Parameters
+
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**ibm_api_version** | Option<**String**> |  |  |[default to 2025-05-01]
+
+### Return type
+
+[**models::GetUsage200Response**](get_usage_200_response.md)
 
 ### Authorization
 
@@ -82,7 +113,7 @@ Update the configuration for the specified instance e.g. instance limit in secon
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**ibm_api_version** | Option<**String**> |  |  |[default to 2025-01-01]
+**ibm_api_version** | Option<**String**> |  |  |[default to 2025-05-01]
 **instance_update** | Option<[**ReplaceInstanceDataRequest**](ReplaceInstanceDataRequest.md)> | Request body for updating a specified instance configuration. |  |
 
 ### Return type

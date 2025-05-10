@@ -5,7 +5,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **id** | **String** | Job ID | 
-**backend_name** | **String** | Backend name | 
+**backend_name** | Option<**String**> | Backend name. May not be set when in the \"open\" state. | 
 **started_at** | Option<**String**> | Timestamp of when the session was started | [optional]
 **activated_at** | Option<**String**> | Timestamp of when the session state was changed to active | [optional]
 **closed_at** | Option<**String**> | Timestamp of when the session was closed | [optional]

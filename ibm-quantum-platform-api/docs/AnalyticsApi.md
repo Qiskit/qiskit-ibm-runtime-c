@@ -23,7 +23,7 @@ Get analytics filters
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**ibm_api_version** | Option<**String**> |  |  |[default to 2025-01-01]
+**ibm_api_version** | Option<**String**> |  |  |[default to 2025-05-01]
 **instance** | Option<[**Vec<String>**](String.md)> |  |  |
 
 ### Return type
@@ -44,7 +44,7 @@ Name | Type | Description  | Required | Notes
 
 ## analytics_usage
 
-> models::AnalyticsUsage200Response analytics_usage(ibm_api_version, instance, interval_start, interval_end, backend, user_id, simulators)
+> models::AnalyticsUsage200Response analytics_usage(ibm_api_version, instance, interval_start, interval_end, backend, user_id, simulators, plan)
 Get usage analytics
 
 Get usage analytics
@@ -54,13 +54,14 @@ Get usage analytics
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**ibm_api_version** | Option<**String**> |  |  |[default to 2025-01-01]
+**ibm_api_version** | Option<**String**> |  |  |[default to 2025-05-01]
 **instance** | Option<[**Vec<String>**](String.md)> |  |  |
 **interval_start** | Option<**String**> |  |  |
 **interval_end** | Option<**String**> |  |  |
 **backend** | Option<[**Vec<String>**](String.md)> |  |  |
 **user_id** | Option<[**Vec<String>**](String.md)> |  |  |
 **simulators** | Option<**bool**> | Include simulators |  |[default to true]
+**plan** | Option<[**Vec<String>**](String.md)> |  |  |
 
 ### Return type
 
@@ -80,7 +81,7 @@ Name | Type | Description  | Required | Notes
 
 ## get_usage_analytics_grouped
 
-> models::GetUsageAnalyticsGrouped200Response get_usage_analytics_grouped(group_by, ibm_api_version, instance, interval_start, interval_end, backend, user_id, simulators)
+> models::GetUsageAnalyticsGrouped200Response get_usage_analytics_grouped(group_by, ibm_api_version, instance, interval_start, interval_end, backend, user_id, simulators, plan)
 Get usage analytics grouped
 
 Get usage analytics grouped
@@ -91,13 +92,14 @@ Get usage analytics grouped
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **group_by** | **String** | key to group usage by | [required] |
-**ibm_api_version** | Option<**String**> |  |  |[default to 2025-01-01]
+**ibm_api_version** | Option<**String**> |  |  |[default to 2025-05-01]
 **instance** | Option<[**Vec<String>**](String.md)> |  |  |
 **interval_start** | Option<**String**> | start date |  |
 **interval_end** | Option<**String**> | end date |  |
 **backend** | Option<[**Vec<String>**](String.md)> | backend to filter by |  |
 **user_id** | Option<[**Vec<String>**](String.md)> |  |  |
 **simulators** | Option<**bool**> | Include simulators |  |[default to true]
+**plan** | Option<[**Vec<String>**](String.md)> |  |  |
 
 ### Return type
 
@@ -117,7 +119,7 @@ Name | Type | Description  | Required | Notes
 
 ## get_usage_analytics_grouped_by_date
 
-> models::GetUsageAnalyticsGroupedByDate200Response get_usage_analytics_grouped_by_date(group_by, ibm_api_version, instance, interval_start, interval_end, backend, user_id, simulators)
+> models::GetUsageAnalyticsGroupedByDate200Response get_usage_analytics_grouped_by_date(group_by, ibm_api_version, instance, interval_start, interval_end, backend, user_id, simulators, plan)
 Get usage analytics grouped by date
 
 Get usage analytics grouped by date
@@ -128,13 +130,14 @@ Get usage analytics grouped by date
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **group_by** | **String** |  | [required] |
-**ibm_api_version** | Option<**String**> |  |  |[default to 2025-01-01]
+**ibm_api_version** | Option<**String**> |  |  |[default to 2025-05-01]
 **instance** | Option<[**Vec<String>**](String.md)> |  |  |
 **interval_start** | Option<**String**> |  |  |
 **interval_end** | Option<**String**> |  |  |
 **backend** | Option<[**Vec<String>**](String.md)> |  |  |
 **user_id** | Option<[**Vec<String>**](String.md)> |  |  |
 **simulators** | Option<**bool**> | Include simulators |  |[default to true]
+**plan** | Option<[**Vec<String>**](String.md)> |  |  |
 
 ### Return type
 
