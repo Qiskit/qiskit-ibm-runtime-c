@@ -76,14 +76,14 @@ pub async fn find_instance_workloads(
         req_builder = match "multi" {
             "multi" => req_builder.query(
                 &param_value
-                    .into_iter()
+                    .iter()
                     .map(|p| ("status".to_owned(), p.to_string()))
                     .collect::<Vec<(std::string::String, std::string::String)>>(),
             ),
             _ => req_builder.query(&[(
                 "status",
                 &param_value
-                    .into_iter()
+                    .iter()
                     .map(|p| p.to_string())
                     .collect::<Vec<String>>()
                     .join(",")
@@ -104,14 +104,14 @@ pub async fn find_instance_workloads(
         req_builder = match "multi" {
             "multi" => req_builder.query(
                 &param_value
-                    .into_iter()
+                    .iter()
                     .map(|p| ("tags".to_owned(), p.to_string()))
                     .collect::<Vec<(std::string::String, std::string::String)>>(),
             ),
             _ => req_builder.query(&[(
                 "tags",
                 &param_value
-                    .into_iter()
+                    .iter()
                     .map(|p| p.to_string())
                     .collect::<Vec<String>>()
                     .join(",")
@@ -176,8 +176,8 @@ pub async fn find_instance_workloads(
         let content = resp.text().await?;
         match content_type {
             ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::FindInstanceWorkloads200Response`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::FindInstanceWorkloads200Response`")))),
+            ContentType::Text => Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::FindInstanceWorkloads200Response`"))),
+            ContentType::Unsupported(unknown_type) => Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::FindInstanceWorkloads200Response`")))),
         }
     } else {
         let content = resp.text().await?;

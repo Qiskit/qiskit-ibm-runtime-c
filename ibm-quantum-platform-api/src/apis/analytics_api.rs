@@ -74,14 +74,14 @@ pub async fn analytics_filters(
         req_builder = match "multi" {
             "multi" => req_builder.query(
                 &param_value
-                    .into_iter()
+                    .iter()
                     .map(|p| ("instance".to_owned(), p.to_string()))
                     .collect::<Vec<(std::string::String, std::string::String)>>(),
             ),
             _ => req_builder.query(&[(
                 "instance",
                 &param_value
-                    .into_iter()
+                    .iter()
                     .map(|p| p.to_string())
                     .collect::<Vec<String>>()
                     .join(",")
@@ -146,8 +146,8 @@ pub async fn analytics_filters(
         let content = resp.text().await?;
         match content_type {
             ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::AnalyticsFilters200Response`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::AnalyticsFilters200Response`")))),
+            ContentType::Text => Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::AnalyticsFilters200Response`"))),
+            ContentType::Unsupported(unknown_type) => Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::AnalyticsFilters200Response`")))),
         }
     } else {
         let content = resp.text().await?;
@@ -189,14 +189,14 @@ pub async fn analytics_usage(
         req_builder = match "multi" {
             "multi" => req_builder.query(
                 &param_value
-                    .into_iter()
+                    .iter()
                     .map(|p| ("instance".to_owned(), p.to_string()))
                     .collect::<Vec<(std::string::String, std::string::String)>>(),
             ),
             _ => req_builder.query(&[(
                 "instance",
                 &param_value
-                    .into_iter()
+                    .iter()
                     .map(|p| p.to_string())
                     .collect::<Vec<String>>()
                     .join(",")
@@ -214,14 +214,14 @@ pub async fn analytics_usage(
         req_builder = match "multi" {
             "multi" => req_builder.query(
                 &param_value
-                    .into_iter()
+                    .iter()
                     .map(|p| ("backend".to_owned(), p.to_string()))
                     .collect::<Vec<(std::string::String, std::string::String)>>(),
             ),
             _ => req_builder.query(&[(
                 "backend",
                 &param_value
-                    .into_iter()
+                    .iter()
                     .map(|p| p.to_string())
                     .collect::<Vec<String>>()
                     .join(",")
@@ -233,14 +233,14 @@ pub async fn analytics_usage(
         req_builder = match "multi" {
             "multi" => req_builder.query(
                 &param_value
-                    .into_iter()
+                    .iter()
                     .map(|p| ("user_id".to_owned(), p.to_string()))
                     .collect::<Vec<(std::string::String, std::string::String)>>(),
             ),
             _ => req_builder.query(&[(
                 "user_id",
                 &param_value
-                    .into_iter()
+                    .iter()
                     .map(|p| p.to_string())
                     .collect::<Vec<String>>()
                     .join(",")
@@ -255,14 +255,14 @@ pub async fn analytics_usage(
         req_builder = match "multi" {
             "multi" => req_builder.query(
                 &param_value
-                    .into_iter()
+                    .iter()
                     .map(|p| ("plan".to_owned(), p.to_string()))
                     .collect::<Vec<(std::string::String, std::string::String)>>(),
             ),
             _ => req_builder.query(&[(
                 "plan",
                 &param_value
-                    .into_iter()
+                    .iter()
                     .map(|p| p.to_string())
                     .collect::<Vec<String>>()
                     .join(",")
@@ -327,8 +327,8 @@ pub async fn analytics_usage(
         let content = resp.text().await?;
         match content_type {
             ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::AnalyticsUsage200Response`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::AnalyticsUsage200Response`")))),
+            ContentType::Text => Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::AnalyticsUsage200Response`"))),
+            ContentType::Unsupported(unknown_type) => Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::AnalyticsUsage200Response`")))),
         }
     } else {
         let content = resp.text().await?;
@@ -373,14 +373,14 @@ pub async fn get_usage_analytics_grouped(
         req_builder = match "multi" {
             "multi" => req_builder.query(
                 &param_value
-                    .into_iter()
+                    .iter()
                     .map(|p| ("instance".to_owned(), p.to_string()))
                     .collect::<Vec<(std::string::String, std::string::String)>>(),
             ),
             _ => req_builder.query(&[(
                 "instance",
                 &param_value
-                    .into_iter()
+                    .iter()
                     .map(|p| p.to_string())
                     .collect::<Vec<String>>()
                     .join(",")
@@ -398,14 +398,14 @@ pub async fn get_usage_analytics_grouped(
         req_builder = match "multi" {
             "multi" => req_builder.query(
                 &param_value
-                    .into_iter()
+                    .iter()
                     .map(|p| ("backend".to_owned(), p.to_string()))
                     .collect::<Vec<(std::string::String, std::string::String)>>(),
             ),
             _ => req_builder.query(&[(
                 "backend",
                 &param_value
-                    .into_iter()
+                    .iter()
                     .map(|p| p.to_string())
                     .collect::<Vec<String>>()
                     .join(",")
@@ -417,14 +417,14 @@ pub async fn get_usage_analytics_grouped(
         req_builder = match "multi" {
             "multi" => req_builder.query(
                 &param_value
-                    .into_iter()
+                    .iter()
                     .map(|p| ("user_id".to_owned(), p.to_string()))
                     .collect::<Vec<(std::string::String, std::string::String)>>(),
             ),
             _ => req_builder.query(&[(
                 "user_id",
                 &param_value
-                    .into_iter()
+                    .iter()
                     .map(|p| p.to_string())
                     .collect::<Vec<String>>()
                     .join(",")
@@ -439,14 +439,14 @@ pub async fn get_usage_analytics_grouped(
         req_builder = match "multi" {
             "multi" => req_builder.query(
                 &param_value
-                    .into_iter()
+                    .iter()
                     .map(|p| ("plan".to_owned(), p.to_string()))
                     .collect::<Vec<(std::string::String, std::string::String)>>(),
             ),
             _ => req_builder.query(&[(
                 "plan",
                 &param_value
-                    .into_iter()
+                    .iter()
                     .map(|p| p.to_string())
                     .collect::<Vec<String>>()
                     .join(",")
@@ -511,8 +511,8 @@ pub async fn get_usage_analytics_grouped(
         let content = resp.text().await?;
         match content_type {
             ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::GetUsageAnalyticsGrouped200Response`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::GetUsageAnalyticsGrouped200Response`")))),
+            ContentType::Text => Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::GetUsageAnalyticsGrouped200Response`"))),
+            ContentType::Unsupported(unknown_type) => Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::GetUsageAnalyticsGrouped200Response`")))),
         }
     } else {
         let content = resp.text().await?;
@@ -563,14 +563,14 @@ pub async fn get_usage_analytics_grouped_by_date(
         req_builder = match "multi" {
             "multi" => req_builder.query(
                 &param_value
-                    .into_iter()
+                    .iter()
                     .map(|p| ("instance".to_owned(), p.to_string()))
                     .collect::<Vec<(std::string::String, std::string::String)>>(),
             ),
             _ => req_builder.query(&[(
                 "instance",
                 &param_value
-                    .into_iter()
+                    .iter()
                     .map(|p| p.to_string())
                     .collect::<Vec<String>>()
                     .join(",")
@@ -588,14 +588,14 @@ pub async fn get_usage_analytics_grouped_by_date(
         req_builder = match "multi" {
             "multi" => req_builder.query(
                 &param_value
-                    .into_iter()
+                    .iter()
                     .map(|p| ("backend".to_owned(), p.to_string()))
                     .collect::<Vec<(std::string::String, std::string::String)>>(),
             ),
             _ => req_builder.query(&[(
                 "backend",
                 &param_value
-                    .into_iter()
+                    .iter()
                     .map(|p| p.to_string())
                     .collect::<Vec<String>>()
                     .join(",")
@@ -607,14 +607,14 @@ pub async fn get_usage_analytics_grouped_by_date(
         req_builder = match "multi" {
             "multi" => req_builder.query(
                 &param_value
-                    .into_iter()
+                    .iter()
                     .map(|p| ("user_id".to_owned(), p.to_string()))
                     .collect::<Vec<(std::string::String, std::string::String)>>(),
             ),
             _ => req_builder.query(&[(
                 "user_id",
                 &param_value
-                    .into_iter()
+                    .iter()
                     .map(|p| p.to_string())
                     .collect::<Vec<String>>()
                     .join(",")
@@ -629,14 +629,14 @@ pub async fn get_usage_analytics_grouped_by_date(
         req_builder = match "multi" {
             "multi" => req_builder.query(
                 &param_value
-                    .into_iter()
+                    .iter()
                     .map(|p| ("plan".to_owned(), p.to_string()))
                     .collect::<Vec<(std::string::String, std::string::String)>>(),
             ),
             _ => req_builder.query(&[(
                 "plan",
                 &param_value
-                    .into_iter()
+                    .iter()
                     .map(|p| p.to_string())
                     .collect::<Vec<String>>()
                     .join(",")
@@ -701,8 +701,8 @@ pub async fn get_usage_analytics_grouped_by_date(
         let content = resp.text().await?;
         match content_type {
             ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::GetUsageAnalyticsGroupedByDate200Response`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::GetUsageAnalyticsGroupedByDate200Response`")))),
+            ContentType::Text => Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::GetUsageAnalyticsGroupedByDate200Response`"))),
+            ContentType::Unsupported(unknown_type) => Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::GetUsageAnalyticsGroupedByDate200Response`")))),
         }
     } else {
         let content = resp.text().await?;
