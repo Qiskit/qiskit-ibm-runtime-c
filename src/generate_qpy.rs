@@ -89,7 +89,7 @@ pub fn generate_qpy_payload(circuit: &qiskit_circuit::Circuit) -> BinResult<Vec<
                     .map(|param| qpy_formats::PackedParam {
                         type_key: b'f',
                         data_len: 8,
-                        data: param.to_be_bytes().to_vec(),
+                        data: param.to_le_bytes().to_vec(),
                     })
                     .collect();
                 qpy_formats::CircuitInstructionV2Pack {
