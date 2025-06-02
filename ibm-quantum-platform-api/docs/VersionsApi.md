@@ -4,14 +4,14 @@ All URIs are relative to *https://quantum.cloud.ibm.com/api*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**get_version**](VersionsApi.md#get_version) | **GET** /v1/versions | Get version
+[**get_versions**](VersionsApi.md#get_versions) | **GET** /v1/versions | Get versions
 
 
 
-## get_version
+## get_versions
 
-> models::VersionResponse get_version()
-Get version
+> models::VersionResponse get_versions()
+Get versions
 
 Get a list of available API versions
 

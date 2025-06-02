@@ -10,7 +10,7 @@ Method | HTTP request | Description
 
 ## find_instance_workloads
 
-> models::FindInstanceWorkloads200Response find_instance_workloads(ibm_api_version, sort, limit, previous, next, backend, search, status, mode, created_after, created_before, tags)
+> models::FindInstanceWorkloads200Response find_instance_workloads(ibm_api_version, user, sort, limit, previous, next, backend, search, status, mode, created_after, created_before, tags)
 List user instance workloads
 
 List user instance workloads
@@ -21,6 +21,7 @@ List user instance workloads
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **ibm_api_version** | Option<**String**> |  |  |[default to 2025-05-01]
+**user** | Option<**String**> | User identifier. For now it can only be \"me\". |  |
 **sort** | Option<**String**> | Field to sort the workloads by. A `-` prefix indicates descending sort order. |  |[default to createdAt]
 **limit** | Option<**f64**> | Number of workloads to return at a time |  |[default to 10]
 **previous** | Option<**String**> | Cursor to previous workloads result page |  |

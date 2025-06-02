@@ -1,6 +1,6 @@
 [package]
 name = "ibm-quantum-platform-api"
-version = "0.21.2"
+version = "0.25.0"
 authors = ["Qiskit Team"]
 description = "Generated API from the Qiskit Runtime API OpenAPI spec"
 license = "Apache-2.0"

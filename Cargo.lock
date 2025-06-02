@@ -559,7 +559,7 @@ dependencies = [
 
 [[package]]
 name = "ibm-quantum-platform-api"
-version = "0.21.2"
+version = "0.25.0"
 dependencies = [
  "reqwest",
  "serde",

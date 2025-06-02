@@ -47,7 +47,7 @@ Name | Type | Description  | Required | Notes
 > delete_session_close(id, ibm_api_version)
 Close job session
 
-Closes the runtime session
+Closes the runtime session. The session stops accepting new jobs and queued jobs will not run. Existing running jobs will run to completion. This is analogous to the `cancel()` function in Qiskit. 
 
 ### Parameters
 
