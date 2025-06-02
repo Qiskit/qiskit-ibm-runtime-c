@@ -8,6 +8,8 @@ use crate::generate_qpy::generate_qpy_payload;
 use crate::qiskit_circuit::Circuit;
 use crate::qiskit_ffi::QkCircuit;
 
+use crate::service::{get_account_from_config, get_backends};
+
 /// This function only generates ISA static circuit QPY with no parameters
 ///
 /// # Safety
@@ -52,4 +54,29 @@ pub unsafe extern "C" fn save_sampler_job_payload(
 
     let model = create_sampler_job_payload(&circuit, backend, Some(shots), runtime, None);
     serde_json::to_writer_pretty(file, &model).unwrap();
+}
+
+#[no_mangle]
+pub extern "C" fn get_access_token() {
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+
+    let account = rt.block_on(get_account_from_config(None, None));
+    println!("run");
+    println!("token: {:?}", account.get_access_token());
+}
+
+
+#[no_mangle]
+pub extern "C" fn get_backend_names() {
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+
+    let account = rt.block_on(get_account_from_config(None, None));
+    let backends = rt.block_on(get_backends(account));
+    println!("backends: {:?}", backends);
 }

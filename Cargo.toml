@@ -1,5 +1,5 @@
 [workspace]
-members = ["ibm-quantum-platform-api"]
+members = ["ibm-quantum-platform-api", "ibmcloud-iam-api"]
 resolver = "2"
 
 [package]
@@ -24,7 +24,11 @@ binrw = "0.13"
 base64-simd = "0.8"
 flate2 = "1.0"
 ibm-quantum-platform-api = { path = "ibm-quantum-platform-api"}
+ibmcloud-iam-api = { path = "ibmcloud-iam-api"}
 serde_json = "1.0"
+serde = "1.0"
+reqwest = "^0.12"
+tokio = { version = "1", features = ["full"] }
 
 [profile.release]
 opt-level = 3

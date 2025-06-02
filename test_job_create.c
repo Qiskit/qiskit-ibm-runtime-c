@@ -10,8 +10,11 @@ extern void generate_qpy(QkCircuit *circuit, char *filename);
 extern void save_sampler_job_payload(QkCircuit *circuit, int32_t shots,
                                      char *backend, char *runtime,
                                      char *filename);
+extern void get_access_token(void);
+extern void get_backend_names(void);
 
 int main(int argc, char *arv[]) {
+  get_backend_names();
   QkCircuit *qc = qk_circuit_new(100, 100);
   uint32_t qubits[1] = {
       0,
