@@ -49,6 +49,10 @@ pub enum ListBackendsError {
 }
 
 /// Returns the configuration for the specified backend.
+///
+/// NOTICE!: This function does not work unless you set the ibm_api_version
+/// to something new enough to pull in the new schema. I've been using:
+/// "2025-06-01"
 pub async fn get_backend_configuration(
     configuration: &configuration::Configuration,
     id: &str,
