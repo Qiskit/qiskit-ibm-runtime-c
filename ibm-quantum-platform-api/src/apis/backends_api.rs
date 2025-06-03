@@ -411,6 +411,7 @@ pub async fn get_backend_status(
 pub async fn list_backends(
     configuration: &configuration::Configuration,
     ibm_api_version: Option<&str>,
+    crn: &str,
 ) -> Result<models::BackendsResponseV2, Error<ListBackendsError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_ibm_api_version = ibm_api_version;
@@ -451,14 +452,15 @@ pub async fn list_backends(
         };
         req_builder = req_builder.header("external-service-token", value);
     };
-    if let Some(ref apikey) = configuration.api_key {
-        let key = apikey.key.clone();
-        let value = match apikey.prefix {
-            Some(ref prefix) => format!("{} {}", prefix, key),
-            None => key,
-        };
-        req_builder = req_builder.header("Service-CRN", value);
-    };
+    req_builder = req_builder.header("Service-CRN", crn);
+    //if let Some(ref apikey) = configuration.api_key {
+    //    let key = apikey.key.clone();
+    //    let value = match apikey.prefix {
+    //        Some(ref prefix) => format!("{} {}", prefix, key),
+    //        None => key,
+    //    };
+    //    req_builder = req_builder.header("Service-CRN", value);
+    //};
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;
@@ -473,6 +475,7 @@ pub async fn list_backends(
 
     if !status.is_client_error() && !status.is_server_error() {
         let content = resp.text().await?;
+        println!("content: {:?}", content);
         match content_type {
             ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
             ContentType::Text => Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::BackendsResponseV2`"))),
