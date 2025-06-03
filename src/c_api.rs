@@ -68,7 +68,6 @@ pub extern "C" fn get_access_token() {
     println!("token: {:?}", account.get_access_token());
 }
 
-
 #[no_mangle]
 pub extern "C" fn get_backend_names() {
     let rt = tokio::runtime::Builder::new_current_thread()

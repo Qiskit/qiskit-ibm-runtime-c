@@ -45,5 +45,6 @@ pub fn create_sampler_job_payload(
         cost: None,
         session_id: None,
         params: Some(params),
+        private: None,
     }
 }
