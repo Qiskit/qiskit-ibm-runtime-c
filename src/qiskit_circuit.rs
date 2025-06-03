@@ -10,6 +10,14 @@ pub struct CircuitInstruction<'a> {
 
 pub struct Circuit(pub *mut qiskit_ffi::QkCircuit);
 
+impl Drop for Circuit {
+    fn drop(&mut self) {
+        unsafe {
+            qiskit_ffi::qk_circuit_free(self.0);
+        }
+    }
+}
+
 impl Circuit {
     pub fn num_qubits(&self) -> u32 {
         unsafe { qiskit_ffi::qk_circuit_num_qubits(self.0) }
