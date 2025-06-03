@@ -61,7 +61,7 @@ impl JobResponseRemoteStorage {
         }
     }
 }
-///
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Type {
     #[serde(rename = "ibmcloud_cos")]
@@ -73,7 +73,7 @@ impl Default for Type {
         Self::IbmcloudCos
     }
 }
-///
+
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum RegionType {
     #[serde(rename = "regional")]

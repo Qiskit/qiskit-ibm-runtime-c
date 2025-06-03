@@ -4,11 +4,11 @@ use std::io::BufReader;
 use std::path::Path;
 
 use ibm_quantum_platform_api::apis::backends_api::list_backends;
+use ibmcloud_global_search_api::apis::configuration::Configuration as SearchConfiguration;
+use ibmcloud_global_search_api::apis::search_api::search;
 use ibmcloud_iam_api::apis::configuration::Configuration;
 use ibmcloud_iam_api::apis::token_operations_api::get_token_api_key;
 use ibmcloud_iam_api::models::token_response::TokenResponse;
-use ibmcloud_global_search_api::apis::search_api::search;
-use ibmcloud_global_search_api::apis::configuration::Configuration as SearchConfiguration;
 
 use std::collections::HashMap;
 
@@ -61,7 +61,7 @@ pub struct Account {
 
 impl Account {
     pub fn get_access_token(&self) -> Option<&str> {
-        self.token.access_token.as_ref().map(|x| x.as_str())
+        self.token.access_token.as_deref()
     }
 }
 
@@ -98,26 +98,34 @@ pub async fn list_instances(account: &Account) -> Vec<String> {
         key: account.get_access_token().unwrap().to_string(),
         prefix: Some("Bearer".to_string()),
     });
-    let body = ibmcloud_global_search_api::models::SearchRequest::FirstCall(Box::new(ibmcloud_global_search_api::models::FirstCall {
+    let body = ibmcloud_global_search_api::models::SearchRequest::FirstCall(Box::new(
+        ibmcloud_global_search_api::models::FirstCall {
             query: "service_name:quantum-computing".to_string(),
-            fields: Some(["crn", "service_plan_unique_id", "name", "doc"].into_iter().map(|x| x.to_string()).collect()),
-    }));
+            fields: Some(
+                ["crn", "service_plan_unique_id", "name", "doc"]
+                    .into_iter()
+                    .map(|x| x.to_string())
+                    .collect(),
+            ),
+        },
+    ));
     let resp = search(
         &config,
         body,
-        None, // x_request_id
-        None, // x_correlation_id
-        None, // account_id
+        None,      // x_request_id
+        None,      // x_correlation_id
+        None,      // account_id
         Some(100), // limit
-        None, // timeout
-        None, // sort
-        None, // is_deleted
-        None, // is_reclaimed
-        None, // is_public
-        None, // impersonate_user
-        None, // can_tag
-        None // is_project_resource
-    ).await;
+        None,      // timeout
+        None,      // sort
+        None,      // is_deleted
+        None,      // is_reclaimed
+        None,      // is_public
+        None,      // impersonate_user
+        None,      // can_tag
+        None,      // is_project_resource
+    )
+    .await;
     let items = resp.unwrap().items;
     println!("items: {:?}", items);
     items.into_iter().map(|x| x.crn).collect()
