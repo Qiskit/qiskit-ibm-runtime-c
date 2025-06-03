@@ -51,43 +51,43 @@ const _: () = {
     ["Offset of field: QkOpCounts::data"][::std::mem::offset_of!(QkOpCounts, data) - 0usize];
     ["Offset of field: QkOpCounts::len"][::std::mem::offset_of!(QkOpCounts, len) - 8usize];
 };
-#[doc = " @ingroup QkCircuit\n\n A circuit instruction representation.\n\n This struct represents the data contained in an individual instruction in a ``QkCircuit``.\n It is not a pointer to the underlying object, but contains a copy of the properties of the\n instruction for inspection."]
+#[doc = " A circuit instruction representation.\n\n This struct represents the data contained in an individual instruction in a ``QkCircuit``.\n It is not a pointer to the underlying object, but contains a copy of the properties of the\n instruction for inspection."]
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct QkCircuitInstruction {
     #[doc = " The instruction name"]
     pub name: *const ::std::os::raw::c_char,
-    #[doc = " The number of qubits for this instruction."]
-    pub num_qubits: u32,
     #[doc = " A pointer to an array of qubit indices this instruction operates on."]
     pub qubits: *mut u32,
-    #[doc = " The number of clbits for this instruction."]
-    pub num_clbits: u32,
     #[doc = " A pointer to an array of clbit indices this instruction operates on."]
     pub clbits: *mut u32,
-    #[doc = " The number of parameters for this instruction."]
-    pub num_params: u32,
     #[doc = " A pointer to an array of parameter values for this instruction."]
     pub params: *mut f64,
+    #[doc = " The number of qubits for this instruction."]
+    pub num_qubits: u32,
+    #[doc = " The number of clbits for this instruction."]
+    pub num_clbits: u32,
+    #[doc = " The number of parameters for this instruction."]
+    pub num_params: u32,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of QkCircuitInstruction"][::std::mem::size_of::<QkCircuitInstruction>() - 56usize];
+    ["Size of QkCircuitInstruction"][::std::mem::size_of::<QkCircuitInstruction>() - 48usize];
     ["Alignment of QkCircuitInstruction"][::std::mem::align_of::<QkCircuitInstruction>() - 8usize];
     ["Offset of field: QkCircuitInstruction::name"]
         [::std::mem::offset_of!(QkCircuitInstruction, name) - 0usize];
-    ["Offset of field: QkCircuitInstruction::num_qubits"]
-        [::std::mem::offset_of!(QkCircuitInstruction, num_qubits) - 8usize];
     ["Offset of field: QkCircuitInstruction::qubits"]
-        [::std::mem::offset_of!(QkCircuitInstruction, qubits) - 16usize];
-    ["Offset of field: QkCircuitInstruction::num_clbits"]
-        [::std::mem::offset_of!(QkCircuitInstruction, num_clbits) - 24usize];
+        [::std::mem::offset_of!(QkCircuitInstruction, qubits) - 8usize];
     ["Offset of field: QkCircuitInstruction::clbits"]
-        [::std::mem::offset_of!(QkCircuitInstruction, clbits) - 32usize];
+        [::std::mem::offset_of!(QkCircuitInstruction, clbits) - 16usize];
+    ["Offset of field: QkCircuitInstruction::params"]
+        [::std::mem::offset_of!(QkCircuitInstruction, params) - 24usize];
+    ["Offset of field: QkCircuitInstruction::num_qubits"]
+        [::std::mem::offset_of!(QkCircuitInstruction, num_qubits) - 32usize];
+    ["Offset of field: QkCircuitInstruction::num_clbits"]
+        [::std::mem::offset_of!(QkCircuitInstruction, num_clbits) - 36usize];
     ["Offset of field: QkCircuitInstruction::num_params"]
         [::std::mem::offset_of!(QkCircuitInstruction, num_params) - 40usize];
-    ["Offset of field: QkCircuitInstruction::params"]
-        [::std::mem::offset_of!(QkCircuitInstruction, params) - 48usize];
 };
 #[doc = " A term in a ``QkObs``.\n\n This contains the coefficient (``coeff``), the number of qubits of the observable\n (``num_qubits``) and pointers to the ``bit_terms`` and ``indices`` arrays, which have\n length ``len``. It's the responsibility of the user that the data is coherent,\n see also the below section on safety.\n\n # Safety\n\n * ``bit_terms`` must be a non-null, aligned pointer to ``len`` elements of type ``QkBitTerm``.\n * ``indices`` must be a non-null, aligned pointer to ``len`` elements of type ``uint32_t``."]
 #[repr(C)]
@@ -178,11 +178,12 @@ unsafe extern "C" {
     pub fn qk_circuit_get_instruction(
         circuit: *const QkCircuit,
         index: usize,
-    ) -> QkCircuitInstruction;
+        ptr: *mut QkCircuitInstruction,
+    );
 }
 unsafe extern "C" {
     #[doc = " @ingroup QkCircuit\n Free a circuit instruction object\n\n @param inst The instruction to free\n\n # Safety\n Behavior is undefined if ``inst`` is not an object returned by ``qk_circuit_get_instruction``."]
-    pub fn qk_circuit_instruction_free(inst: QkCircuitInstruction);
+    pub fn qk_circuit_instruction_clear(inst: *const QkCircuitInstruction);
 }
 unsafe extern "C" {
     #[doc = " @ingroup QkCircuit\n Free a circuit op count list.\n\n @param op_counts The returned op count list from ``qk_circuit_count_ops``.\n\n # Safety\n\n Behavior is undefined if ``op_counts`` is not the object returned by ``qk_circuit_count_ops``."]
