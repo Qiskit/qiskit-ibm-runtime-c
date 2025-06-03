@@ -570,6 +570,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "ibmcloud-global-search-api"
+version = "2.0.1"
+dependencies = [
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_repr",
+ "serde_with",
+ "url",
+]
+
+[[package]]
 name = "ibmcloud-iam-api"
 version = "1.0.0"
 dependencies = [
@@ -1018,6 +1030,7 @@ dependencies = [
  "binrw",
  "flate2",
  "ibm-quantum-platform-api",
+ "ibmcloud-global-search-api",
  "ibmcloud-iam-api",
  "reqwest",
  "serde",

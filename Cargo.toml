@@ -1,5 +1,5 @@
 [workspace]
-members = ["ibm-quantum-platform-api", "ibmcloud-iam-api"]
+members = ["ibm-quantum-platform-api", "ibmcloud-iam-api", "ibmcloud-global-search-api"]
 resolver = "2"
 
 [package]
@@ -25,6 +25,7 @@ base64-simd = "0.8"
 flate2 = "1.0"
 ibm-quantum-platform-api = { path = "ibm-quantum-platform-api"}
 ibmcloud-iam-api = { path = "ibmcloud-iam-api"}
+ibmcloud-global-search-api = { path = "ibmcloud-global-search-api"}
 serde_json = "1.0"
 serde = "1.0"
 reqwest = "^0.12"

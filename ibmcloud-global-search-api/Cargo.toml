@@ -1,0 +1,15 @@
+[package]
+name = "ibmcloud-global-search-api"
+version = "2.0.1"
+authors = ["Qiskit team"]
+description = "Search for resources with the global and shared resource properties repository that is integrated in the IBM Cloud platform. The search repository stores and searches cloud resources attributes, which categorize or classify resources. A resource is a physical or logical component that can be created or reserved for an application or service instance. They are owned by resource providers, such as IBM Kubernetes Service, or resource controller in IBM Cloud. Resources are uniquely identified by a Cloud Resource Name (CRN) or by an IMS ID. The properties of a resource include tags and system properties. Both properties are defined in an IBM Cloud billing account, and span across many regions."
+license = "Apache-2.0"
+edition = "2021"
+
+[dependencies]
+serde = { version = "^1.0", features = ["derive"] }
+serde_with = { version = "^3.8", default-features = false, features = ["base64", "std", "macros"] }
+serde_json = "^1.0"
+serde_repr = "^0.1"
+url = "^2.5"
+reqwest = { version = "^0.12", default-features = false, features = ["json", "multipart"] }
