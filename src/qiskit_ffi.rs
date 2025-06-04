@@ -17,6 +17,17 @@ pub type QkExitCode = u32;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct QkTarget {
+    _unused: [u8; 0],
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct QkTargetEntry {
+    _unused: [u8; 0],
+}
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct QkCircuit {
     _unused: [u8; 0],
 }
@@ -296,4 +307,114 @@ unsafe extern "C" {
 unsafe extern "C" {
     #[doc = " @ingroup QkBitTerm\n Get the label for a bit term.\n\n @param bit_term The bit term.\n\n @return The label as ``uint8_t``, which can be cast to ``char`` to obtain the character.\n\n # Example\n\n     QkBitTerm bit_term = QkBitTerm_Y;\n     // cast the uint8_t to char\n     char label = qk_bitterm_label(bit_term);\n\n # Safety\n\n The behavior is undefined if ``bit_term`` is not a valid ``uint8_t`` value of a ``QkBitTerm``."]
     pub fn qk_bitterm_label(bit_term: QkBitTerm) -> u8;
+}
+
+unsafe extern "C" {
+    #[doc = " @ingroup QkTarget\n Construct a new ``QkTarget`` with the given number of qubits.\n The number of qubits is bound to change if an instruction is added with properties\n that apply to a collection of qargs in which any index is higher than the specified\n number of qubits\n\n @param num_qubits The number of qubits the ``QkTarget`` will explicitly support.\n\n @return A pointer to the new ``QkTarget``\n\n # Example\n\n     QkTarget *target = qk_target_new(5);\n"]
+    pub fn qk_target_new(num_qubits: u32) -> *mut QkTarget;
+}
+unsafe extern "C" {
+    #[doc = " @ingroup QkTarget\n Returns the number of qubits of this ``QkTarget``.\n\n @param target A pointer to the ``QkTarget``.\n\n @return The number of qubits this target can use.\n\n # Example\n\n     QkTarget *target = qk_target_new(5);\n     uint32_t num_qubits = qk_target_num_qubits(target);\n\n # Safety\n\n Behavior is undefined if ``QkTarget`` is not a valid, non-null pointer to a ``QkTarget``."]
+    pub fn qk_target_num_qubits(target: *const QkTarget) -> u32;
+}
+unsafe extern "C" {
+    #[doc = " @ingroup QkTarget\n Returns the dt value of this ``QkTarget``.\n\n @param target A pointer to the ``QkTarget``.\n\n @return The dt value of this ``QkTarget`` or ``NaN`` if not assigned.\n\n # Example\n\n     QkTarget *target = qk_target_new(5);\n     qk_target_set_dt(target, 10e-9);\n     double dt = qk_target_dt(target);\n\n # Safety\n\n Behavior is undefined if ``QkTarget`` is not a valid, non-null pointer to a ``QkTarget``."]
+    pub fn qk_target_dt(target: *const QkTarget) -> f64;
+}
+unsafe extern "C" {
+    #[doc = " @ingroup QkTarget\n Returns the granularity value of this ``QkTarget``.\n\n @param target A pointer to the ``QkTarget``.\n\n @return The ``granularity`` value of this ``QkTarget``.\n\n # Example\n\n     QkTarget *target = qk_target_new(5);\n     // The value defaults to 1\n     uint32_t granularity = qk_target_granularity(target);\n\n # Safety\n\n Behavior is undefined if ``QkTarget`` is not a valid, non-null pointer to a ``QkTarget``."]
+    pub fn qk_target_granularity(target: *const QkTarget) -> u32;
+}
+unsafe extern "C" {
+    #[doc = " @ingroup QkTarget\n Returns the ``min_length`` value of this ``QkTarget``.\n\n @param target A pointer to the ``QkTarget``.\n\n @return The ``min_length`` value of this ``QkTarget``.\n\n # Example\n\n     QkTarget *target = qk_target_new(5);\n     // The value defaults to 1\n     size_t min_length = qk_target_min_length(target);\n\n # Safety\n\n Behavior is undefined if ``QkTarget`` is not a valid, non-null pointer to a ``QkTarget``."]
+    pub fn qk_target_min_length(target: *const QkTarget) -> u32;
+}
+unsafe extern "C" {
+    #[doc = " @ingroup QkTarget\n Returns the ``pulse_alignment`` value of this ``QkTarget``.\n\n @param target A pointer to the ``QkTarget``.\n\n @return The ``pulse_alignment`` value of this ``QkTarget``.\n\n # Example\n\n     QkTarget *target = qk_target_new(5);\n     // The value defaults to 1\n     uint32_t pulse_alignment = qk_target_pulse_alignment(target);\n\n # Safety\n\n Behavior is undefined if ``QkTarget`` is not a valid, non-null pointer to a ``QkTarget``."]
+    pub fn qk_target_pulse_alignment(target: *const QkTarget) -> u32;
+}
+unsafe extern "C" {
+    #[doc = " @ingroup QkTarget\n Returns the ``acquire_alignment`` value of this ``QkTarget``.\n\n @param target A pointer to the ``QkTarget``.\n\n @return The ``acquire_alignment`` value of this ``QkTarget``.\n\n # Example\n\n     QkTarget *target = qk_target_new(5);\n     // The value defaults to 0\n     uint32_t acquire_alignment = qk_target_pulse_alignment(target);\n\n # Safety\n\n Behavior is undefined if ``QkTarget`` is not a valid, non-null pointer to a ``QkTarget``."]
+    pub fn qk_target_acquire_alignment(target: *const QkTarget) -> u32;
+}
+unsafe extern "C" {
+    #[doc = " @ingroup QkTarget\n Sets the dt value of this ``QkTarget``.\n\n @param target A pointer to the ``QkTarget``.\n @param dt The ``dt`` value for the system time resolution of input.\n\n @return ``QkExitCode`` specifying if the operation was successful.\n\n # Example\n\n     QkTarget *target = qk_target_new(5);\n     double dt = qk_target_set_dt(target, 10e-9);\n\n # Safety\n\n Behavior is undefined if ``QkTarget`` is not a valid, non-null pointer to a ``QkTarget``."]
+    pub fn qk_target_set_dt(target: *mut QkTarget, dt: f64) -> QkExitCode;
+}
+unsafe extern "C" {
+    #[doc = " @ingroup QkTarget\n Sets the ``granularity`` value of this ``QkTarget``.\n\n @param target A pointer to the ``QkTarget``.\n @param granularity The value for the minimum pulse gate resolution in\n     units of ``dt``.\n\n @return ``QkExitCode`` specifying if the operation was successful.\n\n # Example\n\n     QkTarget *target = qk_target_new(5);\n     // The value defaults to 1\n     qk_target_set_granularity(target, 2);\n\n # Safety\n\n Behavior is undefined if ``QkTarget`` is not a valid, non-null pointer to a ``QkTarget``."]
+    pub fn qk_target_set_granularity(target: *mut QkTarget, granularity: u32) -> QkExitCode;
+}
+unsafe extern "C" {
+    #[doc = " @ingroup QkTarget\n Sets the ``min_length`` value of this ``QkTarget``.\n\n @param target A pointer to the ``QkTarget``.\n @param min_length The minimum pulse gate length value in units of ``dt``.\n\n @return ``QkExitCode`` specifying if the operation was successful.\n\n # Example\n\n     QkTarget *target = qk_target_new(5);\n     // The value defaults to 1\n     qk_target_set_min_length(target, 3);\n\n # Safety\n\n Behavior is undefined if ``QkTarget`` is not a valid, non-null pointer to a ``QkTarget``."]
+    pub fn qk_target_set_min_length(target: *mut QkTarget, min_length: u32) -> QkExitCode;
+}
+unsafe extern "C" {
+    #[doc = " @ingroup QkTarget\n Returns the ``pulse_alignment`` value of this ``QkTarget``.\n\n @param target A pointer to the ``QkTarget``.\n @param pulse_alignment value representing a time resolution of gate.\n\n @return ``QkExitCode`` specifying if the operation was successful.\n\n # Example\n\n     QkTarget *target = qk_target_new(5);\n     // The value defaults to 1\n     qk_target_set_pulse_alignment(target, 4);\n\n # Safety\n\n Behavior is undefined if ``QkTarget`` is not a valid, non-null pointer to a ``QkTarget``."]
+    pub fn qk_target_set_pulse_alignment(target: *mut QkTarget, pulse_alignment: u32)
+        -> QkExitCode;
+}
+unsafe extern "C" {
+    #[doc = " @ingroup QkTarget\n Sets the ``acquire_alignment`` value of this ``QkTarget``.\n\n @param target A pointer to the ``QkTarget``.\n @param acquire_alignment value representing a time resolution of measure instruction\n     starting time.\n\n @return ``QkExitCode`` specifying if the operation was successful.\n\n # Example\n     QkTarget *target = qk_target_new(5);\n     // The value defaults to 0\n     qk_target_set_acquire_alignment(target, 5);\n\n # Safety\n\n Behavior is undefined if ``QkTarget`` is not a valid, non-null pointer to a ``QkTarget``."]
+    pub fn qk_target_set_acquire_alignment(
+        target: *mut QkTarget,
+        acquire_alignment: u32,
+    ) -> QkExitCode;
+}
+unsafe extern "C" {
+    #[doc = " @ingroup QkTarget\n Creates a copy of the ``QkTarget``.\n\n @param target A pointer to the ``QkTarget`` to copy.\n\n @return A pointer to the new copy of the ``QkTarget``.\n\n # Example\n\n     QkTarget *target = qk_target_new(5);\n     QkTargetEntry *entry = qk_target_entry_new(QkGate_CX);\n     uint32_t qargs[2] = {0, 1};\n     qk_target_entry_add_property(entry, qargs, 2, 0.0, 0.1);\n     QkExitCode result = qk_target_add_instruction(target, entry);\n\n     QkTarget *copied = qk_target_copy(target);\n\n # Safety\n\n Behavior is undefined if ``QkTarget`` is not a valid, non-null pointer to a ``QkTarget``."]
+    pub fn qk_target_copy(target: *mut QkTarget) -> *mut QkTarget;
+}
+unsafe extern "C" {
+    #[doc = " @ingroup QkTarget\n Free the ``QkTarget``.\n\n @param target A pointer to the ``QkTarget`` to free.\n\n # Example\n\n     QkTarget *target = qk_target_new(5);\n     qk_target_free(target);\n\n # Safety\n\n Behavior is undefined if ``QkTarget`` is not a valid, non-null pointer to a ``QkTarget``."]
+    pub fn qk_target_free(target: *mut QkTarget);
+}
+unsafe extern "C" {
+    #[doc = " @ingroup QkTargetEntry\n Creates an entry to the ``QkTarget`` based on a ``QkGate`` instance with\n no parameters.\n\n @note If the instance of ``QkGate`` uses fixed parameters, use ``qk_target_entry_new_fixed``.\n Regular parameters are not currently supported.\n\n @param operation The ``QkGate`` whose properties this target entry defines.\n\n @return A pointer to the new ``QkTargetEntry``.\n\n # Example\n\n     QkTargetEntry *entry = qk_target_entry_new(QkGate_H);"]
+    pub fn qk_target_entry_new(operation: QkGate) -> *mut QkTargetEntry;
+}
+unsafe extern "C" {
+    #[doc = " @ingroup QkTargetEntry\n Creates an entry to the ``QkTarget`` based on a ``QkGate`` instance with\n no parameters.\n\n @note Adding a ``QkGate`` with regular parameters is not currently supported.\n\n @param operation The ``QkGate`` whose properties this target entry defines.\n @param params A pointer to the parameters that the instruction is calibrated for.\n\n @return A pointer to the new ``QkTargetEntry``.\n\n # Example\n\n     double crx_params[1] = {3.14};\n     QkTargetEntry *entry = qk_target_entry_new(QkGate_CRX, crx_params);\n\n # Safety\n\n The ``params`` type is expected to be a pointer to an array of ``double`` where the length\n matches the the expectations of   the ``QkGate``. If the array is insufficently long the\n behavior of this function is undefined as this will read outside the bounds of the array.\n It can be a null pointer if there are no params for a given gate. You can check\n ``qk_gate_num_params`` to determine how many qubits are required for a given gate."]
+    pub fn qk_target_entry_new_fixed(operation: QkGate, params: *mut f64) -> *mut QkTargetEntry;
+}
+unsafe extern "C" {
+    #[doc = " @ingroup QkTargetEntry\n Retrieves the number of properties stored in the target entry.\n\n @param entry The pointer to the mapping object.\n\n @return The number of properties in the ``QkTargetEntry``.\n\n # Example\n\n     // Create an entry for an H gate\n     QkTargetEntry *entry = qk_target_entry_new(QkGate_H);\n     size_t props_size = qk_target_entry_num_properties(entry);\n\n # Safety\n\n The behavior is undefined if ``entry`` is not a valid,\n non-null pointer to a ``QkTargetEntry`` object."]
+    pub fn qk_target_entry_num_properties(entry: *const QkTargetEntry) -> usize;
+}
+unsafe extern "C" {
+    #[doc = " @ingroup QkTargetEntry\n Frees the entry.\n\n @note An entry pointer will be freed when added to a ``QkTarget`` via\n ``qk_target_add_instruction``, this function is only meant to be used\n alternatively if an entry is never added to a ``QkTarget`` instance.\n\n @param entry The pointer to the mapping object to be freed.\n\n # Example\n\n     QkTargetEntry *entry = qk_target_entry_new(QkGate_H);\n     qk_target_entry_free(entry);\n\n # Safety\n\n The behavior is undefined if ``entry`` is not a valid,\n non-null pointer to a ``QkTargetEntry`` object."]
+    pub fn qk_target_entry_free(entry: *mut QkTargetEntry);
+}
+
+unsafe extern "C" {
+    #[doc = " @ingroup QkTargetEntry\n Adds an instruction property instance based on its assigned qargs.\n\n @param entry The pointer to the entry object.\n @param qargs A pointer to the array of ``uint32_t`` qubit indices to add the\n     gate on, can be a null pointer to check for global properties.\n @param num_qubits The length of the qargs array.\n @param duration The instruction's duration in seconds on the specific set of\n     qubits.\n @param error The instruction's average error rate on the specific set of qubits.\n\n # Example\n\n     QkTargetEntry *entry = qk_target_entry_new(QkGate_CX);\n     uint32_t qargs[2] = {0, 1};\n     qk_target_entry_add_property(entry, qargs, 2, 0.  0, 0.1);\n\n # Safety\n\n The behavior is undefined if ``entry`` is not a valid, non-null pointer\n to a ``QkTargetEntry`` object."]
+    pub fn qk_target_entry_add_property(
+        entry: *mut QkTargetEntry,
+        qargs: *mut u32,
+        num_qubits: u32,
+        duration: f64,
+        error: f64,
+    ) -> QkExitCode;
+}
+unsafe extern "C" {
+    #[doc = " @ingroup QkTarget\n Adds a gate to the ``QkTarget`` through a ``QkTargetEntry``.\n\n @param target A pointer to the ``QkTarget``.\n @param target_entry A pointer to the ``QkTargetEntry``. The pointer\n gets freed when added to the ``QkTarget``.\n\n @return ``QkExitCode`` specifying if the operation was successful.\n\n # Example\n\n     QkTarget *target = qk_target_new(5);\n     QkTargetEntry *entry = qk_target_entry_new(QkGate_CX);\n     uint32_t qargs[2] = {0, 1};\n     qk_target_entry_add_property(entry, qargs, 2, 0.0, 0.1);\n     QkExitCode result = qk_target_add_instruction(target, entry);\n\n # Safety\n\n Behavior is undefined if ``QkTarget`` is not a valid, non-null    pointer to a ``QkTarget``.\n\n Behavior is undefined if ``entry`` is not a valid, non-null pointer to a ``QkTargetEntry``."]
+    pub fn qk_target_add_instruction(
+        target: *mut QkTarget,
+        target_entry: *mut QkTargetEntry,
+    ) -> QkExitCode;
+}
+unsafe extern "C" {
+    #[doc = " @ingroup QkTarget\n Modifies the properties of a gate in the ``QkTarget``.\n\n @param target A pointer to the ``QkTarget``.\n @param instruction The instruction to modify.\n @param qargs The pointer to the array of ``uint32_t`` values to use as\n qargs. Can be ``NULL`` if global.\n @param num_qubits The number of qubits of the instruction..\n @param duration The instruction's duration in seconds on the specific set of\n     qubits.\n @param error The instruction's average error rate on the specific set of qubits.\n\n @return ``QkExitCode`` specifying if the operation was successful.\n\n # Example\n\n     QkTarget *target = qk_target_new(5);\n     double params[1] = {3.1415}; \n     QkTargetEntry *entry = qk_target_entry_new_fixed(QkGate_CRX, params);\n     uint32_t qargs[2] = {0, 1};\n     qk_target_entry_add_property(entry, qargs, 2, 0.0, 0.1);\n     qk_target_add_instruction(target, entry);\n\n     qk_target_update_property(target, QkGate_CRX, qargs, 2, 0.0012, 1.1)\n\n # Safety\n\n Behavior is undefined if ``QkTarget`` is not a valid, non-null pointer to a ``QkTarget``.\n\n The ``qargs`` type is expected to be a pointer to an array of ``uint32_t`` where the length\n matches is specified by ``num_qubits`` and has to match the expectation of the gate. If the\n array is insufficently long the behavior of this function is undefined as this will read\n outside  the bounds of the array. It can be a null pointer if there are no qubits for\n a given gate. You can check ``qk_gate_num_qubits`` to determine how many qubits are required\n for a given gate."]
+    pub fn qk_target_update_property(
+        target: *mut QkTarget,
+        instruction: QkGate,
+        qargs: *mut u32,
+        num_qubits: u32,
+        duration: f64,
+        error: f64,
+    ) -> QkExitCode;
+}
+unsafe extern "C" {
+    #[doc = " @ingroup QkTarget\n Returns the number of instructions tracked by a ``QkTarget``.\n\n @param target A pointer to the ``QkTarget``.\n\n @return The length of the target.\n\n # Example\n\n     QkTarget *target = qk_target_new(5);\n     QkTargetEntry *target_enty = qk_target_entry_new(QkGate_H);\n     qk_target_add_instruction(target, target_entry);\n\n     size_t num_instructions = qk_target_num_instructions(target);\n\n # Safety\n\n Behavior is undefined if ``QkTarget`` is not a valid, non-null pointer to a ``QkTarget``."]
+    pub fn qk_target_num_instructions(target: *const QkTarget) -> usize;
 }
