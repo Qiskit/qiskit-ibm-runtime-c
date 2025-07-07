@@ -3,7 +3,9 @@ use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 
-use ibm_quantum_platform_api::apis::backends_api::list_backends;
+use ibm_quantum_platform_api::apis::backends_api::{
+    get_backend_configuration, get_backend_properties, list_backends,
+};
 use ibmcloud_global_search_api::apis::configuration::Configuration as SearchConfiguration;
 use ibmcloud_global_search_api::apis::search_api::search;
 use ibmcloud_iam_api::apis::configuration::Configuration;
@@ -129,6 +131,91 @@ pub async fn list_instances(account: &Account) -> Vec<String> {
     let items = resp.unwrap().items;
     println!("items: {:?}", items);
     items.into_iter().map(|x| x.crn).collect()
+}
+
+pub async fn get_backend(account: Account, backend: &str) -> crate::qiskit_target::Target {
+    let mut config = ibm_quantum_platform_api::apis::configuration::Configuration::default();
+    config.user_agent = Some("qiskit-ibm-runtime-rs/0.0.1".to_string());
+    config.api_key = Some(ibm_quantum_platform_api::apis::configuration::ApiKey {
+        key: account.get_access_token().unwrap().to_string(),
+        prefix: Some("Bearer".to_string()),
+    });
+    let crns = list_instances(&account).await;
+    //    let crn = crns[0].as_str();
+    let backend_configuration = get_backend_configuration(&config, backend, Some("2025-06-01"))
+        .await
+        .unwrap();
+    let backend_properties = get_backend_properties(&config, backend, Some("2025-06-01"), None)
+        .await
+        .unwrap();
+    let num_qubits = backend_configuration["n_qubits"]
+        .as_u64()
+        .unwrap()
+        .try_into()
+        .unwrap();
+    let mut gate_prop_map: HashMap<String, Vec<(Vec<u32>, Option<f64>, Option<f64>)>> =
+        HashMap::new();
+    for gate in backend_properties["gates"].as_array().unwrap() {
+        let gate_map = gate.as_object().unwrap();
+        let gate_params = gate_map["parameters"].as_array().unwrap();
+        let mut gate_error: Option<f64> = None;
+        let mut gate_duration: Option<f64> = None;
+        for prop in gate_params {
+            let prop = prop.as_object().unwrap();
+            let name = prop["name"].as_str().unwrap();
+            if name == "gate_error" {
+                gate_error = prop["value"].as_f64();
+            } else if name == "gate_length" {
+                let unit = prop["unit"].as_str().unwrap();
+                if unit == "ns" {
+                    gate_duration = prop["value"].as_f64().map(|x| x * 1e-9);
+                } else {
+                    panic!("Non-nanosecond unit for gate duration");
+                }
+            }
+        }
+        let qargs = gate_map["qubits"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|x| x.as_u64().unwrap() as u32)
+            .collect::<Vec<_>>();
+        gate_prop_map
+            .entry(gate_map["gate"].as_str().unwrap().to_string())
+            .and_modify(|props| {
+                props.push((qargs.clone(), gate_duration, gate_error));
+            })
+            .or_insert(vec![(qargs, gate_duration, gate_error)]);
+    }
+    let mut target = crate::qiskit_target::Target::new(num_qubits);
+    for (gate, props) in gate_prop_map {
+        let gate = if gate == "x" {
+            crate::qiskit_target::ISAGate::X
+        } else if gate == "sx" {
+            crate::qiskit_target::ISAGate::SX
+        } else if gate == "cz" {
+            crate::qiskit_target::ISAGate::CZ
+        } else if gate == "ecr" {
+            crate::qiskit_target::ISAGate::ECR
+        } else if gate == "rz" {
+            crate::qiskit_target::ISAGate::RZ
+        } else if gate == "rx" {
+            crate::qiskit_target::ISAGate::RX
+        } else if gate == "id" {
+            crate::qiskit_target::ISAGate::I
+        } else if gate == "cx" {
+            crate::qiskit_target::ISAGate::CX
+        } else {
+            panic!("What is a {gate}");
+        };
+        target.add_gate(
+            gate,
+            props
+                .into_iter()
+                .map(|(qubits, dur, err)| (qubits, [dur, err])),
+        );
+    }
+    target
 }
 
 pub async fn get_backends(account: Account) -> Vec<String> {

@@ -418,3 +418,11 @@ unsafe extern "C" {
     #[doc = " @ingroup QkTarget\n Returns the number of instructions tracked by a ``QkTarget``.\n\n @param target A pointer to the ``QkTarget``.\n\n @return The length of the target.\n\n # Example\n\n     QkTarget *target = qk_target_new(5);\n     QkTargetEntry *target_enty = qk_target_entry_new(QkGate_H);\n     qk_target_add_instruction(target, target_entry);\n\n     size_t num_instructions = qk_target_num_instructions(target);\n\n # Safety\n\n Behavior is undefined if ``QkTarget`` is not a valid, non-null pointer to a ``QkTarget``."]
     pub fn qk_target_num_instructions(target: *const QkTarget) -> usize;
 }
+unsafe extern "C" {
+    #[doc = " @ingroup QkTargetEntry\n Creates a new entry for adding a measurement instruction to a ``QkTarget``.\n\n @return A pointer to the new ``QkTargetEntry`` for a measurement instruction.\n\n # Example\n\n     QkTargetEntry *entry = qk_target_entry_new_measure();\n     // Add fixed duration and error rates from qubits at index 0 to 4.\n     for (uint32_t i = 0; i < 5; i++) {\n         // Measure is a single qubit instruction\n         uint32_t qargs[1] = {i};\n         qk_target_entry_add_property(entry, qargs, 1, 1.928e-10, 7.9829e-11);\n     }\n\n     // Add the entry to a target with 5 qubits\n     QkTarget *measure_target = qk_target_new(5);\n                                  qk_target_add_instruction(measure_target, entry);"]
+    pub fn qk_target_entry_new_measure() -> *mut QkTargetEntry;
+}
+unsafe extern "C" {
+    #[doc = " @ingroup QkTargetEntry\n Creates a new entry for adding a reset instruction to a ``QkTarget``.\n\n @return A pointer to the new ``QkTargetEntry`` for a reset instruction.\n\n # Example\n\n     QkTargetEntry *entry = qk_target_entry_new_reset();\n     // Add fixed duration and error rates from qubits at index 0 to 2.\n     for (uint32_t i = 0; i < 3; i++) {\n         // Reset is a single qubit instruction\n         uint32_t qargs[1] = {i};\n         qk_target_entry_add_property(entry, qargs, 1, 1.2e-11, 5.9e-13);\n     }\n\n     // Add the entry to a target with 3 qubits\n     QkTarget *reset_target = qk_target_new(3);\n     qk_target_add_instruction(reset_target, entry);"]
+    pub fn qk_target_entry_new_reset() -> *mut QkTargetEntry;
+}
