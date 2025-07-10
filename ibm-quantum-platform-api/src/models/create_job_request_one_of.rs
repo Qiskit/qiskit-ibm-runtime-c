@@ -39,6 +39,8 @@ pub struct CreateJobRequestOneOf {
     /// When set to true, input parameters are not returned, and the results can only be read once. After the job is completed, input parameters are deleted from the service. After the results are read, they are deleted from the service. When set to false, the input parameters and results follow the standard retention behavior of the API. Only returned in the response if the value is true, otherwise it is omitted.
     #[serde(rename = "private", skip_serializing_if = "Option::is_none")]
     pub private: Option<bool>,
+    #[serde(rename = "version")]
+    pub version: u8,
 }
 
 impl CreateJobRequestOneOf {
@@ -53,6 +55,7 @@ impl CreateJobRequestOneOf {
             session_id: None,
             params: None,
             private: None,
+            version: 2,
         }
     }
 }

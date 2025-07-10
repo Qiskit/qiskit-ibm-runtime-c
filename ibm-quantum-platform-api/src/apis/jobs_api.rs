@@ -219,6 +219,7 @@ pub async fn cancel_job_jid(
 /// Invoke a Qiskit Runtime primitive. Note the returned job ID.  You will use it to check the job's status and review results. This request is rate limited to 5 jobs per minute per user.
 pub async fn create_job(
     configuration: &configuration::Configuration,
+    crn: &str,
     ibm_api_version: Option<&str>,
     parent_job_id: Option<&str>,
     create_job_request: Option<models::CreateJobRequest>,
@@ -269,17 +270,28 @@ pub async fn create_job(
         };
         req_builder = req_builder.header("external-service-token", value);
     };
+    //    if let Some(ref apikey) = configuration.api_key {
+    //        let key = apikey.key.clone();
+    //        let value = match apikey.prefix {
+    //            Some(ref prefix) => format!("{} {}", prefix, key),
+    //            None => key,
+    //        };
+    //        req_builder = req_builder.header("Service-CRN", value);
+    //    };
     if let Some(ref apikey) = configuration.api_key {
         let key = apikey.key.clone();
         let value = match apikey.prefix {
             Some(ref prefix) => format!("{} {}", prefix, key),
             None => key,
         };
-        req_builder = req_builder.header("Service-CRN", value);
+        req_builder = req_builder.header("external-service-token", value);
     };
+    req_builder = req_builder.header("Service-CRN", crn);
+
     req_builder = req_builder.json(&p_create_job_request);
 
     let req = req_builder.build()?;
+    println!("raw request: {:?}", req);
     let resp = configuration.client.execute(req).await?;
 
     let status = resp.status();

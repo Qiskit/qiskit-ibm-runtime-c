@@ -31,8 +31,8 @@ pub struct SamplerV2Input {
     #[serde(rename = "support_qiskit", skip_serializing_if = "Option::is_none")]
     pub support_qiskit: Option<bool>,
     /// For SamplerV2, version should always be 2
-    #[serde(rename = "version", skip_serializing_if = "Option::is_none")]
-    pub version: Option<Version>,
+    #[serde(rename = "version")]
+    pub version: u8,
 }
 
 impl SamplerV2Input {
@@ -43,7 +43,7 @@ impl SamplerV2Input {
             options: None,
             shots: None,
             support_qiskit: None,
-            version: None,
+            version: 2,
         }
     }
 }

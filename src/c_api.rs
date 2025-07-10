@@ -8,7 +8,7 @@ use crate::generate_qpy::generate_qpy_payload;
 use crate::qiskit_circuit::Circuit;
 use crate::qiskit_ffi::QkCircuit;
 
-use crate::service::{get_account_from_config, get_backends};
+use crate::service::{get_account_from_config, get_backends, submit_sampler_job};
 
 /// This function only generates ISA static circuit QPY with no parameters
 ///
@@ -54,6 +54,35 @@ pub unsafe extern "C" fn save_sampler_job_payload(
 
     let model = create_sampler_job_payload(&circuit, backend, Some(shots), runtime, None);
     serde_json::to_writer_pretty(file, &model).unwrap();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn submit_sampler_job_payload(
+    circuit: *mut QkCircuit,
+    shots: i32,
+    runtime: *const c_char,
+) {
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+    let account = rt.block_on(get_account_from_config(None, None));
+    let backends = rt.block_on(get_backends(account.clone()));
+    let backend = backends[0].clone();
+    let runtime = if runtime.is_null() {
+        None
+    } else {
+        unsafe { Some(CStr::from_ptr(runtime).to_str().unwrap().to_string()) }
+    };
+    let shots = if shots < 0 { None } else { Some(shots) };
+    rt.block_on(submit_sampler_job(
+        account,
+        backend,
+        &Circuit(circuit),
+        shots,
+        runtime,
+        None,
+    ));
 }
 
 #[no_mangle]

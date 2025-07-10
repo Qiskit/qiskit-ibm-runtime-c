@@ -6,6 +6,8 @@ use std::path::Path;
 use ibm_quantum_platform_api::apis::backends_api::{
     get_backend_configuration, get_backend_properties, list_backends,
 };
+use ibm_quantum_platform_api::apis::jobs_api::create_job;
+use ibm_quantum_platform_api::models::CreateJobRequest;
 use ibmcloud_global_search_api::apis::configuration::Configuration as SearchConfiguration;
 use ibmcloud_global_search_api::apis::search_api::search;
 use ibmcloud_iam_api::apis::configuration::Configuration;
@@ -55,6 +57,7 @@ fn get_account_config(filename: Option<&str>, name: Option<&str>) -> AccountEntr
     }
 }
 
+#[derive(Clone)]
 pub struct Account {
     config: AccountEntry,
     token: TokenResponse,
@@ -216,6 +219,45 @@ pub async fn get_backend(account: Account, backend: &str) -> crate::qiskit_targe
         );
     }
     target
+}
+
+pub async fn submit_sampler_job(
+    account: Account,
+    backend: String,
+    circuit: &crate::qiskit_circuit::Circuit,
+    shots: Option<i32>,
+    runtime: Option<String>,
+    tags: Option<Vec<String>>,
+) {
+    let mut config = ibm_quantum_platform_api::apis::configuration::Configuration::default();
+    config.user_agent = Some("qiskit-ibm-runtime-rs/0.0.1".to_string());
+    config.api_key = Some(ibm_quantum_platform_api::apis::configuration::ApiKey {
+        key: account.get_access_token().unwrap().to_string(),
+        prefix: Some("Bearer".to_string()),
+    });
+    let crns = list_instances(&account).await;
+    let crn = crns[0].as_str();
+    let job_payload = crate::generate_job_params::create_sampler_job_payload(
+        circuit,
+        backend.clone(),
+        shots,
+        runtime,
+        tags,
+    );
+    let file = File::create("/tmp/test.json").unwrap();
+    serde_json::to_writer_pretty(file, &job_payload).unwrap();
+    let res = create_job(
+        &config,
+        crn,
+        Some("2025-06-01"),
+        None,
+        Some(CreateJobRequest::CreateJobRequestOneOf(Box::new(
+            job_payload,
+        ))),
+    )
+    .await
+    .unwrap();
+    println!("result: {:?}", res);
 }
 
 pub async fn get_backends(account: Account) -> Vec<String> {

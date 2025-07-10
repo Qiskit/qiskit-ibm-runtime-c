@@ -28,8 +28,8 @@ pub fn create_sampler_job_payload(
         pubs,
         options: None,
         shots: Some(shots),
-        support_qiskit: Some(true),
-        version: Some(ibm_quantum_platform_api::models::sampler_v2_input::Version::Variant2),
+        support_qiskit: None,
+        version: 2,
     };
     let params = Box::new(
         ibm_quantum_platform_api::models::CreateJobRequestOneOfAllOfParams::SamplerV2Input(
