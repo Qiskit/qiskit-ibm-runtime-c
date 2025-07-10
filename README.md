@@ -7,3 +7,31 @@ for users of the Qiskit C API to submit QuantumCircuit built from C for
 execution and retrieve primitive results. The goal here is to use Rust to build
 a safe API client for job submission and results processing for IBM's primitives
 but expose that to C.
+
+## Getting Started
+
+### UNIX-like
+
+#### Requirements
+
+Compilation requires the following tools:
+* git
+* rustc
+* cargo
+* gcc
+* cbindgen
+* make
+
+#### Build
+
+To build all tests, you can run the following command in qiskit-ibm-runtime-rs root,
+```
+make build
+```
+
+#### Test
+
+To run all tests, you can run the following command in qiskit-ibm-runtime-rs root,
+```
+make test
+```
