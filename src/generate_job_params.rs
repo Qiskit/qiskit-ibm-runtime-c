@@ -46,5 +46,6 @@ pub fn create_sampler_job_payload(
         session_id: None,
         params: Some(params),
         private: None,
+        version: 2,
     }
 }
