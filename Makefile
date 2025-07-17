@@ -1,7 +1,7 @@
-QISKIT_DIR_NAME = qiskit_c_lib
-QISKIT_DIR = $(realpath -s ./$(QISKIT_DIR_NAME))
-QISKIT_IBM_RUNTIME_RS_DIR = $(realpath -s .)
-QISKIT_URL = https://github.com/Qiskit/qiskit.git
+QISKIT_DIR_NAME := qiskit_c_lib
+QISKIT_DIR := $(shell python3 -c 'import os; print(os.path.abspath("./$(QISKIT_DIR_NAME)"))')
+QISKIT_IBM_RUNTIME_RS_DIR := $(shell python3 -c 'import os; print(os.path.abspath("."))')
+QISKIT_URL := https://github.com/Qiskit/qiskit.git
 
 build: check_deps test_job_create test_qpy
 
