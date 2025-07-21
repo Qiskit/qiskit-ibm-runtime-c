@@ -10,7 +10,7 @@
 // copyright notice, and modified files need to carry a notice indicating
 // that they have been altered from the originals.
 
-use binrw::BinWrite;
+use binrw::prelude::*;
 
 pub type Bytes = Vec<u8>;
 
@@ -36,23 +36,11 @@ pub struct ProgramType {
 #[derive(BinWrite)]
 #[brw(big)]
 pub struct QPYFormatV13 {
-    pub header: HeaderData,
+    pub header: CircuitHeaderV12Pack,
     pub custom_instructions: CustomCircuitInstructionsPack,
     pub instructions: Vec<CircuitInstructionV2Pack>,
     pub calibration_header: Bytes,
     pub layout: LayoutV2Pack,
-}
-
-// header related
-#[derive(BinWrite)]
-#[brw(big)]
-pub struct HeaderData {
-    pub header: CircuitHeaderV12Pack,
-    pub circuit_name: Bytes,
-    pub global_phase_data: Bytes,
-    pub metadata: Bytes,
-    pub qregs: Bytes,
-    pub cregs: Bytes,
 }
 
 #[derive(BinWrite)]
@@ -67,6 +55,10 @@ pub struct CircuitHeaderV12Pack {
     pub num_registers: u32,
     pub num_instructions: u64,
     pub num_vars: u32,
+    pub circuit_name: Bytes,
+    pub global_phase_data: Bytes,
+    pub metadata: Bytes,
+    pub registers: Vec<RegisterV4Pack>,
 }
 
 // circuit instructions related

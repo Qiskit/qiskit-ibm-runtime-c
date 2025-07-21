@@ -36,17 +36,21 @@ pub fn generate_qpy_payload(circuit: &qiskit_circuit::Circuit) -> BinResult<Vec<
         num_qubits: circuit.num_qubits(),
         num_clbits: circuit.num_clbits(),
         metadata_size: empty_json.len() as u64,
-        num_registers: 0,
+        num_registers: 1,
         num_instructions: circuit.num_instructions() as u64,
         num_vars: 0,
-    };
-    let header_data = qpy_formats::HeaderData {
-        header: circuit_header,
         circuit_name: Vec::new(),
         global_phase_data: 0_f64.to_be_bytes().to_vec(),
         metadata: empty_json.as_bytes().to_vec(),
-        qregs: Vec::new(),
-        cregs: Vec::new(),
+        registers: vec![qpy_formats::RegisterV4Pack {
+            register_type: b'c',
+            standalone: true as u8,
+            size: circuit.num_clbits(),
+            name_size: 4,
+            in_circuit: true as u8,
+            name: "meas".as_bytes().to_vec(),
+            bit_indices: (0..circuit.num_clbits()).map(|x| x as i64).collect(),
+        }]
     };
     let instructions =
         circuit
@@ -113,7 +117,7 @@ pub fn generate_qpy_payload(circuit: &qiskit_circuit::Circuit) -> BinResult<Vec<
             .collect();
 
     qpy_formats::QPYFormatV13 {
-        header: header_data,
+        header: circuit_header,
         custom_instructions: qpy_formats::CustomCircuitInstructionsPack {
             custom_operations_length: 0,
             custom_instructions: Vec::new(),

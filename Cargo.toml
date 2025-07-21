@@ -20,7 +20,7 @@ rust-version = "1.79"
 license = "Apache-2.0"
 
 [dependencies]
-binrw = "0.13"
+binrw = "0.15"
 base64-simd = "0.8"
 flate2 = "1.0"
 ibm-quantum-platform-api = { path = "ibm-quantum-platform-api"}
