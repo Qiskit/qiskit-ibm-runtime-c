@@ -52,6 +52,7 @@ fn get_account_config(filename: Option<&str>, name: Option<&str>) -> AccountEntr
         Some(name) => accounts[name].clone(),
         None => accounts
             .get("default")
+            .or_else(|| accounts.get("default-ibm-quantum-platform"))
             .unwrap_or_else(|| &accounts["default-ibm-cloud"])
             .clone(),
     }
