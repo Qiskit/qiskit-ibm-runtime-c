@@ -1,6 +1,6 @@
 from qiskit import qpy
 
-with open("test_before_json.qpy", "rb") as fd:
+with open("test.qpy", "rb") as fd:
     qc = qpy.load(fd)[0]
 
 #print(qc)

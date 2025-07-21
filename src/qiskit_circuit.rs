@@ -1,6 +1,7 @@
 use crate::qiskit_ffi;
 use std::ffi::CStr;
 
+#[derive(Debug)]
 pub struct CircuitInstruction<'a> {
     pub name: String,
     pub qubits: &'a [u32],
@@ -10,7 +11,7 @@ pub struct CircuitInstruction<'a> {
 
 pub struct CircuitInstructions<'a> {
     len: usize,
-    ptr: *mut qiskit_ffi::QkCircuitInstruction,
+    inst: qiskit_ffi::QkCircuitInstruction,
     index: usize,
     circuit: &'a Circuit,
 }
@@ -18,10 +19,7 @@ pub struct CircuitInstructions<'a> {
 impl<'a> Drop for CircuitInstructions<'a> {
     fn drop(&mut self) {
         unsafe {
-            std::alloc::dealloc(
-                self.ptr as *mut u8,
-                std::alloc::Layout::new::<qiskit_ffi::QkCircuitInstruction>(),
-            );
+            qiskit_ffi::qk_circuit_instruction_clear(&mut self.inst);
         }
     }
 }
@@ -40,12 +38,17 @@ impl<'a> Iterator for CircuitInstructions<'a> {
             return None;
         }
         let out = unsafe {
-            qiskit_ffi::qk_circuit_get_instruction(self.circuit.0, self.index, self.ptr);
-            let raw_inst = self.ptr.as_ref().unwrap();
-            let qubits = std::slice::from_raw_parts(raw_inst.qubits, raw_inst.num_qubits as usize);
-            let clbits = std::slice::from_raw_parts(raw_inst.clbits, raw_inst.num_clbits as usize);
-            let params = std::slice::from_raw_parts(raw_inst.params, raw_inst.num_params as usize);
-            let c_name: Box<CStr> = Box::from(CStr::from_ptr(raw_inst.name));
+            if self.index > 0 {
+                qiskit_ffi::qk_circuit_instruction_clear(&mut self.inst);
+            }
+            qiskit_ffi::qk_circuit_get_instruction(self.circuit.0, self.index, &mut self.inst);
+            let qubits =
+                std::slice::from_raw_parts(self.inst.qubits, self.inst.num_qubits as usize);
+            let clbits =
+                std::slice::from_raw_parts(self.inst.clbits, self.inst.num_clbits as usize);
+            let params =
+                std::slice::from_raw_parts(self.inst.params, self.inst.num_params as usize);
+            let c_name: Box<CStr> = Box::from(CStr::from_ptr(self.inst.name));
             let name = c_name.into_c_string().into_string().unwrap();
             let out = Some(CircuitInstruction {
                 name,
@@ -53,7 +56,6 @@ impl<'a> Iterator for CircuitInstructions<'a> {
                 clbits,
                 params,
             });
-            qiskit_ffi::qk_circuit_instruction_clear(self.ptr);
             out
         };
         self.index += 1;
@@ -83,9 +85,14 @@ impl Circuit {
         CircuitInstructions {
             len: num_inst,
             circuit: self,
-            ptr: unsafe {
-                std::alloc::alloc(std::alloc::Layout::new::<qiskit_ffi::QkCircuitInstruction>())
-                    as *mut qiskit_ffi::QkCircuitInstruction
+            inst: qiskit_ffi::QkCircuitInstruction {
+                name: std::ptr::null(),
+                qubits: std::ptr::null_mut(),
+                clbits: std::ptr::null_mut(),
+                params: std::ptr::null_mut(),
+                num_qubits: u32::MAX,
+                num_clbits: u32::MAX,
+                num_params: u32::MAX,
             },
             index: 0,
         }
