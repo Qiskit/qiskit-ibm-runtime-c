@@ -3,11 +3,12 @@ QISKIT_DIR := $(shell python3 -c 'import os; print(os.path.abspath("./$(QISKIT_D
 QISKIT_IBM_RUNTIME_RS_DIR := $(shell python3 -c 'import os; print(os.path.abspath("."))')
 QISKIT_URL := https://github.com/Qiskit/qiskit.git
 
-build: check_deps test_job_create test_qpy
+build: check_deps test_job_create test_job_submit test_qpy
 
 test: build
 	./test_qpy
 	./test_job_create
+#	./test_job_submit
 	python3 test_qpy_load.py
 
 check_deps:
@@ -20,6 +21,11 @@ test_job_create: $(QISKIT_IBM_RUNTIME_RS_DIR)/target/debug $(QISKIT_DIR)/dist/c
 	export LD_LIBRARY_PATH=$(QISKIT_DIR)/dist/c/lib:$LD_LIBRARY_PATH
 	export LD_LIBRARY_PATH=$(QISKIT_IBM_RUNTIME_RS_DIR)/target/debug:$LD_LIBRARY_PATH
 	gcc test_job_create.c -ggdb  -o $@ -lqiskit_ibm_runtime -L./target/debug -I $(QISKIT_DIR)/dist/c/include -L $(QISKIT_DIR)/dist/c/lib -lqiskit
+
+test_job_submit: $(QISKIT_IBM_RUNTIME_RS_DIR)/target/debug $(QISKIT_DIR)/dist/c
+	export LD_LIBRARY_PATH=$(QISKIT_DIR)/dist/c/lib:$LD_LIBRARY_PATH
+	export LD_LIBRARY_PATH=$(QISKIT_IBM_RUNTIME_RS_DIR)/target/debug:$LD_LIBRARY_PATH
+	gcc test_job_submit.c -ggdb  -o $@ -lqiskit_ibm_runtime -L./target/debug -I $(QISKIT_DIR)/dist/c/include -L $(QISKIT_DIR)/dist/c/lib -lqiskit
 
 test_qpy: $(QISKIT_IBM_RUNTIME_RS_DIR)/target/debug $(QISKIT_DIR)/dist/c
 	export LD_LIBRARY_PATH=$(QISKIT_DIR)/dist/c/lib:$LD_LIBRARY_PATH
