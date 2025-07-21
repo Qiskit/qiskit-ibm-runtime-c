@@ -68,7 +68,7 @@ pub unsafe extern "C" fn submit_sampler_job_payload(
         .unwrap();
     let account = rt.block_on(get_account_from_config(None, None));
     let backends = rt.block_on(get_backends(account.clone()));
-    let backend = backends[0].clone();
+    let backend = backends.last().unwrap().clone();
     let runtime = if runtime.is_null() {
         None
     } else {
