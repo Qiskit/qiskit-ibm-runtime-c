@@ -6,11 +6,11 @@
 #include <stdio.h>
 #include <string.h>
 
+typedef struct Job Job;
+
+extern int32_t qkrt_sampler_job_run(Job **job, QkCircuit *circuit, int32_t shots, char *runtime);
+extern void qkrt_job_free(Job *job);
 extern void generate_qpy(QkCircuit *circuit, char *filename);
-extern void save_sampler_job_payload(QkCircuit *circuit, int32_t shots,
-                                     char *backend, char *runtime,
-                                     char *filename);
-extern void submit_sampler_job_payload(QkCircuit *circuit, int32_t shots, char *runtime);
 extern void get_access_token(void);
 extern void get_backend_names(void);
 
@@ -35,10 +35,18 @@ int main(int argc, char *arv[]) {
   }
   int32_t shots = 4196;
   generate_qpy(qc, "test_before_json.qpy");
-  submit_sampler_job_payload(qc, shots, NULL);
+
+  Job *job;
+  int res = qkrt_sampler_job_run(&job, qc, shots, NULL);
+  if (res != 0) {
+        printf("run failed with code: %d\n", res);
+        goto cleanup;
+  }
+  qkrt_job_free(job);
   QkOpCounts op_counts = qk_circuit_count_ops(qc);
   for (int i = 0; i < op_counts.len; i++) {
-    printf("%s: %d\n", op_counts.data[i].name, op_counts.data[i].count);
+    printf("%s: %lu\n", op_counts.data[i].name, op_counts.data[i].count);
   }
+  cleanup:
   qk_circuit_free(qc);
 }

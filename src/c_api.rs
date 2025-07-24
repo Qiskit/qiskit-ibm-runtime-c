@@ -8,7 +8,15 @@ use crate::generate_qpy::generate_qpy_payload;
 use crate::qiskit_circuit::Circuit;
 use crate::qiskit_ffi::QkCircuit;
 
-use crate::service::{get_account_from_config, get_backends, submit_sampler_job};
+use crate::service::{get_account_from_config, get_backends, submit_sampler_job, ExitCode, Job, ServiceError};
+
+
+fn log_err(e: &ServiceError) {
+    if !std::env::var("QISKIT_IBM_RUNTIME_LOG_LEVEL").is_err() {
+        eprintln!("{:?}", e)
+    }
+}
+
 
 /// This function only generates ISA static circuit QPY with no parameters
 ///
@@ -30,7 +38,7 @@ pub unsafe extern "C" fn generate_qpy(circuit: *mut QkCircuit, filename: *const 
 ///
 /// It's C so it's never safe
 #[no_mangle]
-pub unsafe extern "C" fn save_sampler_job_payload(
+pub unsafe extern "C" fn qkrt_sampler_job_write_payload(
     circuit: *mut QkCircuit,
     shots: i32,
     backend: *const c_char,
@@ -57,11 +65,16 @@ pub unsafe extern "C" fn save_sampler_job_payload(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn submit_sampler_job_payload(
+pub unsafe extern "C" fn qkrt_sampler_job_run(
+    out: *mut *mut Job,
     circuit: *mut QkCircuit,
     shots: i32,
     runtime: *const c_char,
-) {
+) -> ExitCode {
+    if out.is_null() {
+        return ExitCode::NullPointerError;
+    }
+    *out = std::ptr::null_mut();
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
@@ -75,7 +88,7 @@ pub unsafe extern "C" fn submit_sampler_job_payload(
         unsafe { Some(CStr::from_ptr(runtime).to_str().unwrap().to_string()) }
     };
     let shots = if shots < 0 { None } else { Some(shots) };
-    rt.block_on(submit_sampler_job(
+    let res = rt.block_on(submit_sampler_job(
         account,
         backend,
         &Circuit(circuit),
@@ -83,6 +96,25 @@ pub unsafe extern "C" fn submit_sampler_job_payload(
         runtime,
         None,
     ));
+    match res {
+        Ok(job) => {
+            *out = Box::into_raw(Box::new(job));
+            ExitCode::Success
+        },
+        Err(e) => {
+            log_err(&e);
+            e.code()
+        },
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_job_free(job: *mut Job) {
+    if !job.is_null() {
+        unsafe {
+            drop(Box::from_raw(job));
+        }
+    }
 }
 
 #[no_mangle]
