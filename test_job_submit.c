@@ -57,7 +57,7 @@ int main(int argc, char *arv[]) {
             goto cleanup;
         }
         printf("current status: %d\n", status);
-    } while (status != 0 || status != 1);
+    } while (status != 0 && status != 1);
     printf("job terminated with status: %d\n", status);
 
     qkrt_job_free(job);
