@@ -2,18 +2,19 @@ use std::ffi::{c_char, CStr};
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
-
+use crate::ExitCode;
 use crate::generate_job_params::create_sampler_job_payload;
 use crate::generate_qpy::generate_qpy_payload;
+use crate::pointers::const_ptr_as_ref;
 use crate::qiskit_circuit::Circuit;
 use crate::qiskit_ffi::QkCircuit;
 
-use crate::service::{get_account_from_config, get_backends, submit_sampler_job, ExitCode, Job, ServiceError};
+use crate::service::{get_account_from_config, get_backends, get_job_details, get_job_status, submit_sampler_job, Job, JobDetails, ServiceError};
 
 
 fn log_err(e: &ServiceError) {
     if !std::env::var("QISKIT_IBM_RUNTIME_LOG_LEVEL").is_err() {
-        eprintln!("{:?}", e)
+        eprintln!("** ERROR: {:?}", e)
     }
 }
 
@@ -114,6 +115,67 @@ pub unsafe extern "C" fn qkrt_job_free(job: *mut Job) {
         unsafe {
             drop(Box::from_raw(job));
         }
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_job_details(out: *mut *mut JobDetails, job: *const Job) -> ExitCode {
+    if out.is_null() {
+        return ExitCode::NullPointerError;
+    }
+    *out = std::ptr::null_mut();
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+    let account = rt.block_on(get_account_from_config(None, None));
+    let job = const_ptr_as_ref(job);
+    let res = rt.block_on(get_job_details(
+        account,
+        job,
+    ));
+    match res {
+        Ok(job) => {
+            *out = Box::into_raw(Box::new(job));
+            ExitCode::Success
+        },
+        Err(e) => {
+            log_err(&e);
+            e.code()
+        },
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_job_details_free(details: *mut JobDetails) {
+    if !details.is_null() {
+        unsafe {
+            drop(Box::from_raw(details));
+        }
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_job_status(out: *mut u32, job: *const Job) -> ExitCode {
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+    let account = rt.block_on(get_account_from_config(None, None));
+    let job = const_ptr_as_ref(job);
+    let res = rt.block_on(get_job_status(
+        account,
+        job,
+    ));
+    match res {
+        Ok(job) => {
+            *out = job as u32;
+            ExitCode::Success
+        },
+        Err(e) => {
+            log_err(&e);
+            e.code()
+        },
     }
 }
 

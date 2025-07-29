@@ -6,7 +6,7 @@ use std::path::Path;
 use ibm_quantum_platform_api::apis::backends_api::{
     get_backend_configuration, get_backend_properties, list_backends,
 };
-use ibm_quantum_platform_api::apis::jobs_api::{create_job, CreateJobError};
+use ibm_quantum_platform_api::apis::jobs_api::{create_job, get_job_details_jid};
 use ibm_quantum_platform_api::models::CreateJobRequest;
 use ibmcloud_global_search_api::apis::configuration::Configuration as SearchConfiguration;
 use ibmcloud_global_search_api::apis::search_api::search;
@@ -16,7 +16,10 @@ use ibmcloud_iam_api::models::token_response::TokenResponse;
 
 use std::collections::HashMap;
 use std::error;
-use std::fmt::{Display, Formatter};
+use std::fmt::{Debug, Display, Formatter};
+use ibm_quantum_platform_api::models;
+use ibm_quantum_platform_api::models::job_response::Status;
+use crate::ExitCode;
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct AccountEntry {
@@ -42,30 +45,30 @@ pub struct Job {
     id: String,
 }
 
-#[derive(Copy, Clone, Debug)]
-#[repr(u32)]
-pub enum ExitCode {
-    /// Success.
-    Success = 0,
-    /// Unexpected null pointer.
-    NullPointerError = 1,
-    /// Pointer is not aligned to expected data.
-    AlignmentError = 2,
-    /// An invalid argument was provided during the function call.
-    BadArgumentError = 3,
+#[derive(Clone, Debug)]
+pub struct JobDetails(models::JobResponse);
 
-    /// An error we didn't anticipate from Qiskit runtime during job creation.
-    JobCreateUnhandledError = 100,
-    /// The user called the job creation service with invalid parameters.
-    JobCreateBadRequest = 101,
-    /// The user is not authenticated to submit the job.
-    JobCreateUnauthenticated = 102,
-    /// The user is not permitted to submit the job.
-    JobCreateForbidden = 103,
-    /// The create job endpoint returned a 404.
-    JobCreateNotFound = 104,
-    /// The create job endpoint returned a 409.
-    JobCreateConflict = 105,
+#[repr(u32)]
+pub enum JobStatus {
+    Queued = 0,
+    Running = 1,
+    Completed = 2,
+    Cancelled = 3,
+    CancelledRanTooLong = 4,
+    Failed = 5,
+}
+
+impl JobDetails {
+    fn status(&self) -> JobStatus {
+        match self.0.status {
+            Status::Queued => JobStatus::Queued,
+            Status::Running => JobStatus::Running,
+            Status::Completed => JobStatus::Completed,
+            Status::Cancelled => JobStatus::Cancelled,
+            Status::CancelledRanTooLong => JobStatus::CancelledRanTooLong,
+            Status::Failed => JobStatus::Failed,
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -92,30 +95,25 @@ impl Display for ServiceError {
 
 impl error::Error for ServiceError {}
 
-impl From<ibm_quantum_platform_api::apis::Error<CreateJobError>> for ServiceError {
-    fn from(value: ibm_quantum_platform_api::apis::Error<CreateJobError>) -> Self {
+impl<T: Debug> From<ibm_quantum_platform_api::apis::Error<T>> for ServiceError {
+    fn from(value: ibm_quantum_platform_api::apis::Error<T>) -> Self {
         match value {
             ibm_quantum_platform_api::apis::Error::ResponseError(e) => {
                 ServiceError {
-                    code: match e.entity {
-                        Some(e) => {
-                            match e {
-                                CreateJobError::Status400(_) => ExitCode::JobCreateBadRequest,
-                                CreateJobError::Status401(_) => ExitCode::JobCreateUnauthenticated,
-                                CreateJobError::Status403(_) => ExitCode::JobCreateForbidden,
-                                CreateJobError::Status404(_) => ExitCode::JobCreateNotFound,
-                                CreateJobError::Status409(_) => ExitCode::JobCreateConflict,
-                                CreateJobError::UnknownValue(_) => ExitCode::JobCreateUnhandledError,
-                            }
-                        },
-                        None => ExitCode::JobCreateUnhandledError,
+                    code: match e.status.as_u16() {
+                        400 => ExitCode::IBMQuantumAPIBadRequest,
+                        401 => ExitCode::IBMQuantumAPIUnauthenticated,
+                        403 => ExitCode::IBMQuantumAPIForbidden,
+                        404 => ExitCode::IBMQuantumAPINotFound,
+                        409 => ExitCode::IBMQuantumAPIConflict,
+                        _ => ExitCode::IBMQuantumAPIUnhandledError,
                     },
                     message: e.content,
                 }
             }
             _ => ServiceError {
-                code: ExitCode::JobCreateUnhandledError,
-                message: format!("An unhandled error has occurred during job creation:\n\n{:?}", value).to_string(),
+                code: ExitCode::IBMQuantumAPIUnhandledError,
+                message: format!("An unhandled error has occurred job creation:\n\n{:?}", value).to_string(),
             }
         }
     }
@@ -347,6 +345,21 @@ pub async fn submit_sampler_job(
     Ok(Job {
         id: res.id,
     })
+}
+
+pub async fn get_job_details(account: Account, job: &Job) -> Result<JobDetails, ServiceError> {
+    let mut config = ibm_quantum_platform_api::apis::configuration::Configuration::default();
+    config.user_agent = Some("qiskit-ibm-runtime-rs/0.0.1".to_string());
+    config.api_key = Some(ibm_quantum_platform_api::apis::configuration::ApiKey {
+        key: account.get_access_token().unwrap().to_string(),
+        prefix: Some("Bearer".to_string()),
+    });
+    Ok(JobDetails(get_job_details_jid(&config, job.id.as_str(), Some("2025-06-01"), None).await?))
+}
+
+pub async fn get_job_status(account: Account, job: &Job) -> Result<JobStatus, ServiceError> {
+    let details = get_job_details(account, job).await?;
+    Ok(details.status())
 }
 
 pub async fn get_backends(account: Account) -> Vec<String> {

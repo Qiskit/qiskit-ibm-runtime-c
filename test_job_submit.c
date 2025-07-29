@@ -10,6 +10,8 @@ typedef struct Job Job;
 
 extern int32_t qkrt_sampler_job_run(Job **job, QkCircuit *circuit, int32_t shots, char *runtime);
 
+extern int32_t qkrt_job_status(uint32_t *status, Job *job);
+
 extern void qkrt_job_free(Job *job);
 
 extern void generate_qpy(QkCircuit *circuit, char *filename);
@@ -46,6 +48,18 @@ int main(int argc, char *arv[]) {
         printf("run failed with code: %d\n", res);
         goto cleanup;
     }
+
+    uint32_t status;
+    do {
+        res = qkrt_job_status(&status, job);
+        if (res != 0) {
+            printf("status poll failed with code: %d\n", res);
+            goto cleanup;
+        }
+        printf("current status: %d\n", status);
+    } while (status != 0 || status != 1);
+    printf("job terminated with status: %d\n", status);
+
     qkrt_job_free(job);
     QkOpCounts op_counts = qk_circuit_count_ops(qc);
     for (int i = 0; i < op_counts.len; i++) {
