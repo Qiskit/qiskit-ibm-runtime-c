@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 typedef struct Job Job;
 
@@ -51,13 +52,15 @@ int main(int argc, char *arv[]) {
 
     uint32_t status;
     do {
+        printf("waiting 20 seconds to poll...");
+        sleep(20);
         res = qkrt_job_status(&status, job);
         if (res != 0) {
             printf("status poll failed with code: %d\n", res);
             goto cleanup;
         }
         printf("current status: %d\n", status);
-    } while (status != 0 && status != 1);
+    } while (status == 0 || status == 1);
     printf("job terminated with status: %d\n", status);
 
     qkrt_job_free(job);

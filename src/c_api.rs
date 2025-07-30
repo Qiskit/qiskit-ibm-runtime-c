@@ -9,7 +9,7 @@ use crate::pointers::const_ptr_as_ref;
 use crate::qiskit_circuit::Circuit;
 use crate::qiskit_ffi::QkCircuit;
 
-use crate::service::{get_account_from_config, get_backends, get_job_details, get_job_status, submit_sampler_job, Job, JobDetails, ServiceError};
+use crate::service::{get_account_from_config, get_backends, get_job_details, get_job_status, list_instances, submit_sampler_job, Job, JobDetails, ServiceError};
 
 
 fn log_err(e: &ServiceError) {
@@ -81,7 +81,14 @@ pub unsafe extern "C" fn qkrt_sampler_job_run(
         .build()
         .unwrap();
     let account = rt.block_on(get_account_from_config(None, None));
-    let backends = rt.block_on(get_backends(account.clone()));
+    let crn = if let Some(crn) = &account.config.instance {
+        crn.clone()
+    } else {
+        // for now, just grab the first one
+        rt.block_on(list_instances(&account)).into_iter().next().expect("no instances")
+    };
+
+    let backends = rt.block_on(get_backends(account.clone(), &crn));
     let backend = backends.last().unwrap().clone();
     let runtime = if runtime.is_null() {
         None
@@ -91,6 +98,7 @@ pub unsafe extern "C" fn qkrt_sampler_job_run(
     let shots = if shots < 0 { None } else { Some(shots) };
     let res = rt.block_on(submit_sampler_job(
         account,
+        &crn,
         backend,
         &Circuit(circuit),
         shots,
@@ -199,6 +207,12 @@ pub extern "C" fn get_backend_names() {
         .unwrap();
 
     let account = rt.block_on(get_account_from_config(None, None));
-    let backends = rt.block_on(get_backends(account));
+    let crn = if let Some(crn) = &account.config.instance {
+        crn.clone()
+    } else {
+        // for now, just grab the first one
+        rt.block_on(list_instances(&account)).into_iter().next().expect("no instances")
+    };
+    let backends = rt.block_on(get_backends(account, &crn));
     println!("backends: {:?}", backends);
 }

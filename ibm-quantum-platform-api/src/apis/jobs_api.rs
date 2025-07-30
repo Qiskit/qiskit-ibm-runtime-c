@@ -278,14 +278,6 @@ pub async fn create_job(
     //        };
     //        req_builder = req_builder.header("Service-CRN", value);
     //    };
-    if let Some(ref apikey) = configuration.api_key {
-        let key = apikey.key.clone();
-        let value = match apikey.prefix {
-            Some(ref prefix) => format!("{} {}", prefix, key),
-            None => key,
-        };
-        req_builder = req_builder.header("external-service-token", value);
-    };
     req_builder = req_builder.header("Service-CRN", crn);
 
     req_builder = req_builder.json(&p_create_job_request);
@@ -490,6 +482,7 @@ pub async fn get_interim_results_jid(
 /// List the details about the specified quantum program job.
 pub async fn get_job_details_jid(
     configuration: &configuration::Configuration,
+    crn: &str,
     id: &str,
     ibm_api_version: Option<&str>,
     exclude_params: Option<bool>,
@@ -542,16 +535,18 @@ pub async fn get_job_details_jid(
         };
         req_builder = req_builder.header("external-service-token", value);
     };
-    if let Some(ref apikey) = configuration.api_key {
-        let key = apikey.key.clone();
-        let value = match apikey.prefix {
-            Some(ref prefix) => format!("{} {}", prefix, key),
-            None => key,
-        };
-        req_builder = req_builder.header("Service-CRN", value);
-    };
+    // if let Some(ref apikey) = configuration.api_key {
+    //     let key = apikey.key.clone();
+    //     let value = match apikey.prefix {
+    //         Some(ref prefix) => format!("{} {}", prefix, key),
+    //         None => key,
+    //     };
+    //     req_builder = req_builder.header("Service-CRN", value);
+    // };
+    req_builder = req_builder.header("Service-CRN", crn);
 
     let req = req_builder.build()?;
+    println!("raw request (job details): {:?}", req);
     let resp = configuration.client.execute(req).await?;
 
     let status = resp.status();

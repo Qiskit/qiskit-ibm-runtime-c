@@ -18,19 +18,21 @@ use std::collections::HashMap;
 use std::error;
 use std::fmt::{Debug, Display, Formatter};
 use ibm_quantum_platform_api::models;
+use ibm_quantum_platform_api::models::backends_response_v2_devices_inner_status::Name;
 use ibm_quantum_platform_api::models::job_response::Status;
 use crate::ExitCode;
 
 #[derive(Deserialize, Serialize, Clone)]
 pub struct AccountEntry {
-    channel: String,
+    pub channel: String,
+    pub instance: Option<String>,
     #[serde(default)]
-    private_endpoint: bool,
-    token: String,
-    url: String,
+    pub private_endpoint: bool,
+    pub token: String,
+    pub url: String,
     proxies: Option<ProxyConfiguration>,
     #[serde(default)]
-    verify: bool,
+    pub verify: bool,
 }
 
 #[derive(Deserialize, Serialize, Clone)]
@@ -43,6 +45,7 @@ struct ProxyConfiguration {
 #[derive(Clone, Debug)]
 pub struct Job {
     id: String,
+    crn: String, // The CRN used when submitting the job
 }
 
 #[derive(Clone, Debug)]
@@ -144,7 +147,7 @@ fn get_account_config(filename: Option<&str>, name: Option<&str>) -> AccountEntr
 
 #[derive(Clone)]
 pub struct Account {
-    config: AccountEntry,
+    pub config: AccountEntry,
     token: TokenResponse,
     iam_config: Configuration,
 }
@@ -308,6 +311,7 @@ pub async fn get_backend(account: Account, backend: &str) -> crate::qiskit_targe
 
 pub async fn submit_sampler_job(
     account: Account,
+    crn: &str,
     backend: String,
     circuit: &crate::qiskit_circuit::Circuit,
     shots: Option<i32>,
@@ -320,8 +324,6 @@ pub async fn submit_sampler_job(
         key: account.get_access_token().unwrap().to_string(),
         prefix: Some("Bearer".to_string()),
     });
-    let crns = list_instances(&account).await;
-    let crn = crns[0].as_str();
     let job_payload = crate::generate_job_params::create_sampler_job_payload(
         circuit,
         backend.clone(),
@@ -344,6 +346,7 @@ pub async fn submit_sampler_job(
     println!("result: {:?}", res);
     Ok(Job {
         id: res.id,
+        crn: crn.to_string(),
     })
 }
 
@@ -354,7 +357,9 @@ pub async fn get_job_details(account: Account, job: &Job) -> Result<JobDetails, 
         key: account.get_access_token().unwrap().to_string(),
         prefix: Some("Bearer".to_string()),
     });
-    Ok(JobDetails(get_job_details_jid(&config, job.id.as_str(), Some("2025-06-01"), None).await?))
+    let details = get_job_details_jid(&config, job.crn.as_str(), job.id.as_str(), Some("2025-06-01"), None).await?;
+    println!("details: {:?}", details);
+    Ok(JobDetails(details))
 }
 
 pub async fn get_job_status(account: Account, job: &Job) -> Result<JobStatus, ServiceError> {
@@ -362,20 +367,19 @@ pub async fn get_job_status(account: Account, job: &Job) -> Result<JobStatus, Se
     Ok(details.status())
 }
 
-pub async fn get_backends(account: Account) -> Vec<String> {
+pub async fn get_backends(account: Account, instance_crn: &str) -> Vec<String> {
     let mut config = ibm_quantum_platform_api::apis::configuration::Configuration::default();
     config.user_agent = Some("qiskit-ibm-runtime-rs/0.0.1".to_string());
     config.api_key = Some(ibm_quantum_platform_api::apis::configuration::ApiKey {
         key: account.get_access_token().unwrap().to_string(),
         prefix: Some("Bearer".to_string()),
     });
-    let crns = list_instances(&account).await;
-    let crn = crns[0].as_str();
-    let resp = list_backends(&config, Some("2025-06-01"), crn).await;
+    let resp = list_backends(&config, Some("2025-06-01"), instance_crn).await;
     resp.unwrap()
         .devices
         .unwrap()
         .into_iter()
+        .filter(|d| matches!(d.status.name, Name::Online))
         .map(|x| x.name)
         .collect()
 }
