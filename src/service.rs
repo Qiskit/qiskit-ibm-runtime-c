@@ -158,7 +158,7 @@ impl Account {
     }
 }
 
-pub async fn get_account_from_config(filename: Option<&str>, name: Option<&str>) -> Account {
+pub async fn get_account_from_config(filename: Option<&str>, name: Option<&str>) -> Result<Account, ServiceError> {
     let config = get_account_config(filename, name);
     let iam_config = Configuration {
         base_path: "https://iam.cloud.ibm.com".to_owned(),
@@ -175,13 +175,12 @@ pub async fn get_account_from_config(filename: Option<&str>, name: Option<&str>)
         config.token.as_str(),
         None,
     )
-    .await
-    .unwrap();
-    Account {
+    .await?;
+    Ok(Account {
         config,
         token: response,
         iam_config,
-    }
+    })
 }
 
 pub async fn list_instances(account: &Account) -> Vec<String> {

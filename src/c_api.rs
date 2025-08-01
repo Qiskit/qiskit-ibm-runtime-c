@@ -18,6 +18,17 @@ fn log_err(e: &ServiceError) {
     }
 }
 
+macro_rules! check_result {
+    ($expr:expr) => {
+        match $expr {
+            Ok(val) => val,
+            Err(e) => {
+                log_err(&e);
+                return e.code();
+            },
+        }
+    };
+}
 
 /// This function only generates ISA static circuit QPY with no parameters
 ///
@@ -80,7 +91,8 @@ pub unsafe extern "C" fn qkrt_sampler_job_run(
         .enable_all()
         .build()
         .unwrap();
-    let account = rt.block_on(get_account_from_config(None, None));
+    let account = check_result!(rt.block_on(get_account_from_config(None, None)));
+
     let crn = if let Some(crn) = &account.config.instance {
         crn.clone()
     } else {
@@ -96,7 +108,7 @@ pub unsafe extern "C" fn qkrt_sampler_job_run(
         unsafe { Some(CStr::from_ptr(runtime).to_str().unwrap().to_string()) }
     };
     let shots = if shots < 0 { None } else { Some(shots) };
-    let res = rt.block_on(submit_sampler_job(
+    let job = check_result!(rt.block_on(submit_sampler_job(
         account,
         &crn,
         backend,
@@ -104,17 +116,9 @@ pub unsafe extern "C" fn qkrt_sampler_job_run(
         shots,
         runtime,
         None,
-    ));
-    match res {
-        Ok(job) => {
-            *out = Box::into_raw(Box::new(job));
-            ExitCode::Success
-        },
-        Err(e) => {
-            log_err(&e);
-            e.code()
-        },
-    }
+    )));
+    *out = Box::into_raw(Box::new(job));
+    ExitCode::Success
 }
 
 #[no_mangle]
@@ -136,22 +140,14 @@ pub unsafe extern "C" fn qkrt_job_details(out: *mut *mut JobDetails, job: *const
         .enable_all()
         .build()
         .unwrap();
-    let account = rt.block_on(get_account_from_config(None, None));
+    let account = check_result!(rt.block_on(get_account_from_config(None, None)));
     let job = const_ptr_as_ref(job);
-    let res = rt.block_on(get_job_details(
+    let details = check_result!(rt.block_on(get_job_details(
         account,
         job,
-    ));
-    match res {
-        Ok(job) => {
-            *out = Box::into_raw(Box::new(job));
-            ExitCode::Success
-        },
-        Err(e) => {
-            log_err(&e);
-            e.code()
-        },
-    }
+    )));
+    *out = Box::into_raw(Box::new(details));
+    ExitCode::Success
 }
 
 #[no_mangle]
@@ -170,21 +166,14 @@ pub unsafe extern "C" fn qkrt_job_status(out: *mut u32, job: *const Job) -> Exit
         .build()
         .unwrap();
     let account = rt.block_on(get_account_from_config(None, None));
+    let account = check_result!(account);
     let job = const_ptr_as_ref(job);
-    let res = rt.block_on(get_job_status(
+    let status = check_result!(rt.block_on(get_job_status(
         account,
         job,
-    ));
-    match res {
-        Ok(job) => {
-            *out = job as u32;
-            ExitCode::Success
-        },
-        Err(e) => {
-            log_err(&e);
-            e.code()
-        },
-    }
+    )));
+    *out = status as u32;
+    ExitCode::Success
 }
 
 #[no_mangle]
@@ -194,7 +183,7 @@ pub extern "C" fn get_access_token() {
         .build()
         .unwrap();
 
-    let account = rt.block_on(get_account_from_config(None, None));
+    let account = rt.block_on(get_account_from_config(None, None)).unwrap();
     println!("run");
     println!("token: {:?}", account.get_access_token());
 }
@@ -206,7 +195,7 @@ pub extern "C" fn get_backend_names() {
         .build()
         .unwrap();
 
-    let account = rt.block_on(get_account_from_config(None, None));
+    let account = rt.block_on(get_account_from_config(None, None)).unwrap();
     let crn = if let Some(crn) = &account.config.instance {
         crn.clone()
     } else {
