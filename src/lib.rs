@@ -10,6 +10,10 @@ mod pointers;
 
 pub use c_api::generate_qpy;
 
+// TODO: should we make these errors specific to the internal service error codes rather than
+//       just generic HTTP response codes? The internal codes for IBM quantum are at least
+//       present in the API response error message, but perhaps they're available in a field
+//       we can match on.
 #[derive(Copy, Clone, Debug)]
 #[repr(u32)]
 pub enum ExitCode {
@@ -23,15 +27,41 @@ pub enum ExitCode {
     BadArgumentError = 3,
 
     /// An error we didn't anticipate from IBM Quantum platform.
-    IBMQuantumAPIUnhandledError = 100,
+    QuantumAPIUnhandledError = 100,
     /// The IBM Quantum platform was called with invalid parameters.
-    IBMQuantumAPIBadRequest = 101,
+    QuantumAPIBadRequest = 101,
     /// The IBM Quantum platform needs to be authenticated before this action.
-    IBMQuantumAPIUnauthenticated = 102,
+    QuantumAPIUnauthenticated = 102,
     /// The IBM Quantum platform user is not permitted to perform this action.
-    IBMQuantumAPIForbidden = 103,
+    QuantumAPIForbidden = 103,
     /// The IBM Quantum platform returned a 404.
-    IBMQuantumAPINotFound = 104,
+    QuantumAPINotFound = 104,
     /// The IBM Quantum platform returned a 409.
-    IBMQuantumAPIConflict = 105,
+    QuantumAPIConflict = 105,
+
+    /// An error we didn't anticipate from IBM Global Search.
+    GlobalSearchAPIUnhandledError = 200,
+    /// The IBM Global Search was called with invalid parameters.
+    GlobalSearchAPIBadRequest = 201,
+    /// The IBM Global Search needs to be authenticated before this action.
+    GlobalSearchAPIUnauthenticated = 202,
+    /// The IBM Global Search user is not permitted to perform this action.
+    GlobalSearchAPIForbidden = 203,
+    /// The IBM Global Search returned a 404.
+    GlobalSearchAPINotFound = 204,
+    /// The IBM Global Search returned a 409.
+    GlobalSearchAPIConflict = 205,
+
+    /// An error we didn't anticipate from IBM IAM.
+    IAMAPIUnhandledError = 300,
+    /// The IBM IAM was called with invalid parameters.
+    IAMAPIBadRequest = 301,
+    /// The IBM IAM needs to be authenticated before this action.
+    IAMAPIUnauthenticated = 302,
+    /// The IBM IAM user is not permitted to perform this action.
+    IAMAPIForbidden = 303,
+    /// The IBM IAM returned a 404.
+    IAMAPINotFound = 304,
+    /// The IBM IAM returned a 409.
+    IAMAPIConflict = 305,
 }

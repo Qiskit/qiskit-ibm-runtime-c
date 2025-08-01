@@ -104,19 +104,67 @@ impl<T: Debug> From<ibm_quantum_platform_api::apis::Error<T>> for ServiceError {
             ibm_quantum_platform_api::apis::Error::ResponseError(e) => {
                 ServiceError {
                     code: match e.status.as_u16() {
-                        400 => ExitCode::IBMQuantumAPIBadRequest,
-                        401 => ExitCode::IBMQuantumAPIUnauthenticated,
-                        403 => ExitCode::IBMQuantumAPIForbidden,
-                        404 => ExitCode::IBMQuantumAPINotFound,
-                        409 => ExitCode::IBMQuantumAPIConflict,
-                        _ => ExitCode::IBMQuantumAPIUnhandledError,
+                        400 => ExitCode::QuantumAPIBadRequest,
+                        401 => ExitCode::QuantumAPIUnauthenticated,
+                        403 => ExitCode::QuantumAPIForbidden,
+                        404 => ExitCode::QuantumAPINotFound,
+                        409 => ExitCode::QuantumAPIConflict,
+                        _ => ExitCode::QuantumAPIUnhandledError,
                     },
                     message: e.content,
                 }
             }
             _ => ServiceError {
-                code: ExitCode::IBMQuantumAPIUnhandledError,
-                message: format!("An unhandled error has occurred job creation:\n\n{:?}", value).to_string(),
+                code: ExitCode::QuantumAPIUnhandledError,
+                message: format!("Unhandled Qiskit runtime API error:\n\n{:?}", value).to_string(),
+            }
+        }
+    }
+}
+
+impl<T: Debug> From<ibmcloud_global_search_api::apis::Error<T>> for ServiceError {
+    fn from(value: ibmcloud_global_search_api::apis::Error<T>) -> Self {
+        match value {
+            ibmcloud_global_search_api::apis::Error::ResponseError(e) => {
+                ServiceError {
+                    code: match e.status.as_u16() {
+                        400 => ExitCode::GlobalSearchAPIBadRequest,
+                        401 => ExitCode::GlobalSearchAPIUnauthenticated,
+                        403 => ExitCode::GlobalSearchAPIForbidden,
+                        404 => ExitCode::GlobalSearchAPINotFound,
+                        409 => ExitCode::GlobalSearchAPIConflict,
+                        _ => ExitCode::GlobalSearchAPIUnhandledError,
+                    },
+                    message: e.content,
+                }
+            }
+            _ => ServiceError {
+                code: ExitCode::GlobalSearchAPIUnhandledError,
+                message: format!("Unhandled IBM Global Search API error:\n\n{:?}", value).to_string(),
+            }
+        }
+    }
+}
+
+impl<T: Debug> From<ibmcloud_iam_api::apis::Error<T>> for ServiceError {
+    fn from(value: ibmcloud_iam_api::apis::Error<T>) -> Self {
+        match value {
+            ibmcloud_iam_api::apis::Error::ResponseError(e) => {
+                ServiceError {
+                    code: match e.status.as_u16() {
+                        400 => ExitCode::IAMAPIBadRequest,
+                        401 => ExitCode::IAMAPIUnauthenticated,
+                        403 => ExitCode::IAMAPIForbidden,
+                        404 => ExitCode::IAMAPINotFound,
+                        409 => ExitCode::IAMAPIConflict,
+                        _ => ExitCode::IAMAPIUnhandledError,
+                    },
+                    message: e.content,
+                }
+            }
+            _ => ServiceError {
+                code: ExitCode::IAMAPIUnhandledError,
+                message: format!("Unhandled IBM IAM API error:\n\n{:?}", value).to_string(),
             }
         }
     }
