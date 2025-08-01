@@ -9,7 +9,7 @@ use crate::pointers::const_ptr_as_ref;
 use crate::qiskit_circuit::Circuit;
 use crate::qiskit_ffi::QkCircuit;
 
-use crate::service::{get_account_from_config, get_backends, get_job_details, get_job_status, list_instances, submit_sampler_job, Job, JobDetails, ServiceError};
+use crate::service::{get_account_from_config, get_backends, get_job_details, get_job_status, list_instances, submit_sampler_job, Job, JobDetails, Service, ServiceError};
 
 
 fn log_err(e: &ServiceError) {
@@ -74,6 +74,30 @@ pub unsafe extern "C" fn qkrt_sampler_job_write_payload(
 
     let model = create_sampler_job_payload(&circuit, backend, Some(shots), runtime, None);
     serde_json::to_writer_pretty(file, &model).unwrap();
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_service_new(out: *mut *mut Service) -> ExitCode {
+    if out.is_null() {
+        return ExitCode::NullPointerError;
+    }
+    *out = std::ptr::null_mut();
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+    let account = check_result!(rt.block_on(get_account_from_config(None, None)));
+    *out = Box::into_raw(Box::new(Service::new(account)));
+    ExitCode::Success
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_service_free(service: *mut Service) {
+    if !service.is_null() {
+        unsafe {
+            drop(Box::from_raw(service));
+        }
+    }
 }
 
 #[no_mangle]

@@ -22,7 +22,7 @@ use ibm_quantum_platform_api::models::backends_response_v2_devices_inner_status:
 use ibm_quantum_platform_api::models::job_response::Status;
 use crate::ExitCode;
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 pub struct AccountEntry {
     pub channel: String,
     pub instance: Option<String>,
@@ -35,7 +35,7 @@ pub struct AccountEntry {
     pub verify: bool,
 }
 
-#[derive(Deserialize, Serialize, Clone)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 struct ProxyConfiguration {
     urls: Option<HashMap<String, String>>,
     username_ntlm: Option<String>,
@@ -193,7 +193,25 @@ fn get_account_config(filename: Option<&str>, name: Option<&str>) -> AccountEntr
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
+pub struct Service {
+    account: Account,
+    quantum_config: ibm_quantum_platform_api::apis::configuration::Configuration,
+}
+
+impl Service {
+    pub fn new(account: Account) -> Self {
+        let mut quantum_config = ibm_quantum_platform_api::apis::configuration::Configuration::default();
+        quantum_config.user_agent = Some("qiskit-ibm-runtime-rs/0.0.1".to_string());
+        quantum_config.api_key = Some(ibm_quantum_platform_api::apis::configuration::ApiKey {
+            key: account.get_access_token().unwrap().to_string(),
+            prefix: Some("Bearer".to_string()),
+        });
+        Service { account, quantum_config }
+    }
+}
+
+#[derive(Clone, Debug)]
 pub struct Account {
     pub config: AccountEntry,
     token: TokenResponse,
