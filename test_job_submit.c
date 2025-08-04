@@ -7,22 +7,34 @@
 #include <string.h>
 #include <unistd.h>
 
+typedef struct Service Service;
 typedef struct Job Job;
+typedef struct Backend Backend;
+typedef struct BackendSearchResults BackendSearchResults;
 
-extern int32_t qkrt_sampler_job_run(Job **job, QkCircuit *circuit, int32_t shots, char *runtime);
+extern int32_t qkrt_service_new(Service **out);
 
-extern int32_t qkrt_job_status(uint32_t *status, Job *job);
+extern void qkrt_service_free(Service *service);
+
+extern int32_t qkrt_backend_search(BackendSearchResults **out, Service *service);
+
+extern void qkrt_backend_search_results_free(BackendSearchResults *results);
+
+extern uint64_t qkrt_backend_search_results_length(BackendSearchResults *results);
+
+extern Backend** qkrt_backend_search_results_data(BackendSearchResults *results);
+
+extern char* qkrt_backend_name(Backend *backend);
+
+extern int32_t qkrt_sampler_job_run(Job **out, Service *service, Backend *backend, QkCircuit *circuit, int32_t shots, char *runtime);
+
+extern int32_t qkrt_job_status(uint32_t *out, Service *service, Job *job);
 
 extern void qkrt_job_free(Job *job);
 
 extern void generate_qpy(QkCircuit *circuit, char *filename);
 
-extern void get_access_token(void);
-
-extern void get_backend_names(void);
-
 int main(int argc, char *arv[]) {
-    get_backend_names();
     QkCircuit *qc = qk_circuit_new(100, 100);
     uint32_t qubits[1] = {
             0,
@@ -43,18 +55,47 @@ int main(int argc, char *arv[]) {
     int32_t shots = 4196;
     generate_qpy(qc, "test_before_json.qpy");
 
+    int res = 0;
+
+    Service *service;
+    res = qkrt_service_new(&service);
+    if (res != 0) {
+        printf("service new failed with code: %d\n", res);
+        goto cleanup;
+    }
+
+    BackendSearchResults *results;
+    res = qkrt_backend_search(&results, service);
+    if (res != 0) {
+        printf("backend search failed with code: %d\n", res);
+        goto cleanup_service;
+    }
+
+    uint64_t result_count = qkrt_backend_search_results_length(results);
+    Backend **backends = qkrt_backend_search_results_data(results);
+    printf("found backends:\n");
+    for (uint64_t i = 0; i < result_count; i++) {
+        printf("  [%llu] %s\n", i, qkrt_backend_name(backends[i]));
+    }
+
+    uint64_t selected_backend = 0;
+    printf("\n enter the index of the backend to select: ");
+    scanf("%llu", &selected_backend);
+
+    printf("\n you have selected backend: %s\n", qkrt_backend_name(backends[selected_backend]));
+
     Job *job;
-    int res = qkrt_sampler_job_run(&job, qc, shots, NULL);
+    res = qkrt_sampler_job_run(&job, service, backends[selected_backend], qc, shots, NULL);
     if (res != 0) {
         printf("run failed with code: %d\n", res);
-        goto cleanup;
+        goto cleanup_search;
     }
 
     uint32_t status;
     do {
-        printf("waiting 20 seconds to poll...");
+        printf("waiting 20 seconds to poll...\n");
         sleep(20);
-        res = qkrt_job_status(&status, job);
+        res = qkrt_job_status(&status, service, job);
         if (res != 0) {
             printf("status poll failed with code: %d\n", res);
             goto cleanup;
@@ -68,6 +109,11 @@ int main(int argc, char *arv[]) {
     for (int i = 0; i < op_counts.len; i++) {
         printf("%s: %lu\n", op_counts.data[i].name, op_counts.data[i].count);
     }
+
+    cleanup_search:
+    qkrt_backend_search_results_free(results);
+    cleanup_service:
+    qkrt_service_free(service);
     cleanup:
     qk_circuit_free(qc);
 }

@@ -9,7 +9,7 @@ use crate::pointers::const_ptr_as_ref;
 use crate::qiskit_circuit::Circuit;
 use crate::qiskit_ffi::QkCircuit;
 
-use crate::service::{get_account_from_config, get_backends, get_job_details, get_job_status, list_instances, submit_sampler_job, Job, JobDetails, Service, ServiceError};
+use crate::service::{get_account_from_config, get_backends, get_job_details, get_job_status, submit_sampler_job, Backend, BackendSearchResults, Job, JobDetails, Service, ServiceError};
 
 
 fn log_err(e: &ServiceError) {
@@ -101,8 +101,52 @@ pub unsafe extern "C" fn qkrt_service_free(service: *mut Service) {
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn qkrt_backend_search(out: *mut *mut BackendSearchResults, service: *const Service) -> ExitCode {
+    if out.is_null() {
+        return ExitCode::NullPointerError;
+    }
+    *out = std::ptr::null_mut();
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+    let account = check_result!(rt.block_on(get_backends(const_ptr_as_ref(service))));
+    *out = Box::into_raw(Box::new(account));
+    ExitCode::Success
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_backend_search_results_free(results: *mut BackendSearchResults) {
+    if !results.is_null() {
+        unsafe {
+            drop(Box::from_raw(results));
+        }
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_backend_search_results_length(results: *const BackendSearchResults) -> u64 {
+    let results = const_ptr_as_ref(results);
+    results.len() as u64
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_backend_search_results_data(results: *const BackendSearchResults) -> *const *const Backend {
+    let results = const_ptr_as_ref(results);
+    results.data_ptr()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_backend_name(backend: *const Backend) -> *const c_char {
+    let backend = const_ptr_as_ref(backend);
+    backend.name.as_ptr()
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn qkrt_sampler_job_run(
     out: *mut *mut Job,
+    service: *const Service,
+    backend: *const Backend,
     circuit: *mut QkCircuit,
     shots: i32,
     runtime: *const c_char,
@@ -115,17 +159,9 @@ pub unsafe extern "C" fn qkrt_sampler_job_run(
         .enable_all()
         .build()
         .unwrap();
-    let account = check_result!(rt.block_on(get_account_from_config(None, None)));
 
-    let crn = if let Some(crn) = &account.config.instance {
-        crn.clone()
-    } else {
-        // for now, just grab the first one
-        rt.block_on(list_instances(&account)).into_iter().next().expect("no instances")
-    };
-
-    let backends = rt.block_on(get_backends(account.clone(), &crn));
-    let backend = backends.last().unwrap().clone();
+    let service = const_ptr_as_ref(service);
+    let backend = const_ptr_as_ref(backend);
     let runtime = if runtime.is_null() {
         None
     } else {
@@ -133,9 +169,8 @@ pub unsafe extern "C" fn qkrt_sampler_job_run(
     };
     let shots = if shots < 0 { None } else { Some(shots) };
     let job = check_result!(rt.block_on(submit_sampler_job(
-        account,
-        &crn,
-        backend,
+        &service,
+        backend.name().to_string(),
         &Circuit(circuit),
         shots,
         runtime,
@@ -155,7 +190,7 @@ pub unsafe extern "C" fn qkrt_job_free(job: *mut Job) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn qkrt_job_details(out: *mut *mut JobDetails, job: *const Job) -> ExitCode {
+pub unsafe extern "C" fn qkrt_job_details(out: *mut *mut JobDetails, service: *const Service, job: *const Job) -> ExitCode {
     if out.is_null() {
         return ExitCode::NullPointerError;
     }
@@ -164,10 +199,10 @@ pub unsafe extern "C" fn qkrt_job_details(out: *mut *mut JobDetails, job: *const
         .enable_all()
         .build()
         .unwrap();
-    let account = check_result!(rt.block_on(get_account_from_config(None, None)));
+    let service = const_ptr_as_ref(service);
     let job = const_ptr_as_ref(job);
     let details = check_result!(rt.block_on(get_job_details(
-        account,
+        service,
         job,
     )));
     *out = Box::into_raw(Box::new(details));
@@ -184,16 +219,15 @@ pub unsafe extern "C" fn qkrt_job_details_free(details: *mut JobDetails) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn qkrt_job_status(out: *mut u32, job: *const Job) -> ExitCode {
+pub unsafe extern "C" fn qkrt_job_status(out: *mut u32, service: *const Service, job: *const Job) -> ExitCode {
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
         .unwrap();
-    let account = rt.block_on(get_account_from_config(None, None));
-    let account = check_result!(account);
+    let service = const_ptr_as_ref(service);
     let job = const_ptr_as_ref(job);
     let status = check_result!(rt.block_on(get_job_status(
-        account,
+        service,
         job,
     )));
     *out = status as u32;
@@ -210,22 +244,4 @@ pub extern "C" fn get_access_token() {
     let account = rt.block_on(get_account_from_config(None, None)).unwrap();
     println!("run");
     println!("token: {:?}", account.get_access_token());
-}
-
-#[no_mangle]
-pub extern "C" fn get_backend_names() {
-    let rt = tokio::runtime::Builder::new_current_thread()
-        .enable_all()
-        .build()
-        .unwrap();
-
-    let account = rt.block_on(get_account_from_config(None, None)).unwrap();
-    let crn = if let Some(crn) = &account.config.instance {
-        crn.clone()
-    } else {
-        // for now, just grab the first one
-        rt.block_on(list_instances(&account)).into_iter().next().expect("no instances")
-    };
-    let backends = rt.block_on(get_backends(account, &crn));
-    println!("backends: {:?}", backends);
 }
