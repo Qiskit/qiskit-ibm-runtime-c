@@ -9,7 +9,7 @@ use crate::pointers::const_ptr_as_ref;
 use crate::qiskit_circuit::Circuit;
 use crate::qiskit_ffi::QkCircuit;
 
-use crate::service::{get_account_from_config, get_backends, get_job_details, get_job_status, submit_sampler_job, Backend, BackendSearchResults, Job, JobDetails, Service, ServiceError};
+use crate::service::{get_account_from_config, get_backends, get_job_details, get_job_status, list_instances, submit_sampler_job, Backend, BackendSearchResults, Job, JobDetails, Service, ServiceError};
 
 
 fn log_err(e: &ServiceError) {
@@ -87,7 +87,14 @@ pub unsafe extern "C" fn qkrt_service_new(out: *mut *mut Service) -> ExitCode {
         .build()
         .unwrap();
     let account = check_result!(rt.block_on(get_account_from_config(None, None)));
-    *out = Box::into_raw(Box::new(Service::new(account)));
+    let crns = if let Some(instance) = &account.config.instance {
+        vec![instance.clone()]
+    } else {
+        // The user's config does not specify an instance, so use all instances accessible
+        // to their account.
+        check_result!(rt.block_on(list_instances(&account)))
+    };
+    *out = Box::into_raw(Box::new(Service::new(account, crns)));
     ExitCode::Success
 }
 
@@ -110,8 +117,8 @@ pub unsafe extern "C" fn qkrt_backend_search(out: *mut *mut BackendSearchResults
         .enable_all()
         .build()
         .unwrap();
-    let account = check_result!(rt.block_on(get_backends(const_ptr_as_ref(service))));
-    *out = Box::into_raw(Box::new(account));
+    let results = check_result!(rt.block_on(get_backends(const_ptr_as_ref(service))));
+    *out = Box::into_raw(Box::new(results));
     ExitCode::Success
 }
 
@@ -169,8 +176,8 @@ pub unsafe extern "C" fn qkrt_sampler_job_run(
     };
     let shots = if shots < 0 { None } else { Some(shots) };
     let job = check_result!(rt.block_on(submit_sampler_job(
-        &service,
-        backend.name().to_string(),
+        service,
+        backend,
         &Circuit(circuit),
         shots,
         runtime,
