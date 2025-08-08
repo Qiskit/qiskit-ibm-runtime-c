@@ -1,16 +1,18 @@
-use std::ffi::{c_char, CStr};
-use std::fs::File;
-use std::io::prelude::*;
-use std::path::Path;
-use crate::ExitCode;
 use crate::generate_job_params::create_sampler_job_payload;
 use crate::generate_qpy::generate_qpy_payload;
 use crate::pointers::const_ptr_as_ref;
 use crate::qiskit_circuit::Circuit;
 use crate::qiskit_ffi::QkCircuit;
+use crate::ExitCode;
+use std::ffi::{c_char, CStr};
+use std::fs::File;
+use std::io::prelude::*;
+use std::path::Path;
 
-use crate::service::{get_account_from_config, get_backends, get_job_details, get_job_status, list_instances, submit_sampler_job, Backend, BackendSearchResults, Job, JobDetails, Service, ServiceError};
-
+use crate::service::{
+    get_account_from_config, get_backends, get_job_details, get_job_status, list_instances,
+    submit_sampler_job, Backend, BackendSearchResults, Job, JobDetails, Service, ServiceError,
+};
 
 fn log_err(e: &ServiceError) {
     if !std::env::var("QISKIT_IBM_RUNTIME_LOG_LEVEL").is_err() {
@@ -25,7 +27,7 @@ macro_rules! check_result {
             Err(e) => {
                 log_err(&e);
                 return e.code();
-            },
+            }
         }
     };
 }
@@ -90,7 +92,10 @@ pub unsafe extern "C" fn qkrt_service_new(out: *mut *mut Service) -> ExitCode {
     let mut instances = check_result!(rt.block_on(list_instances(&account)));
     if let Some(instance) = &account.config.instance {
         // Filter-out any instance that doesn't match the user's config.
-        instances = instances.into_iter().filter(|x| &x.crn.to_str().unwrap() == &instance).collect()
+        instances = instances
+            .into_iter()
+            .filter(|x| &x.crn.to_str().unwrap() == &instance)
+            .collect()
     }
     *out = Box::into_raw(Box::new(Service::new(account, instances)));
     ExitCode::Success
@@ -106,7 +111,10 @@ pub unsafe extern "C" fn qkrt_service_free(service: *mut Service) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn qkrt_backend_search(out: *mut *mut BackendSearchResults, service: *const Service) -> ExitCode {
+pub unsafe extern "C" fn qkrt_backend_search(
+    out: *mut *mut BackendSearchResults,
+    service: *const Service,
+) -> ExitCode {
     if out.is_null() {
         return ExitCode::NullPointerError;
     }
@@ -130,19 +138,25 @@ pub unsafe extern "C" fn qkrt_backend_search_results_free(results: *mut BackendS
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn qkrt_backend_search_results_length(results: *const BackendSearchResults) -> u64 {
+pub unsafe extern "C" fn qkrt_backend_search_results_length(
+    results: *const BackendSearchResults,
+) -> u64 {
     let results = const_ptr_as_ref(results);
     results.len() as u64
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn qkrt_backend_search_results_data(results: *const BackendSearchResults) -> *const *const Backend {
+pub unsafe extern "C" fn qkrt_backend_search_results_data(
+    results: *const BackendSearchResults,
+) -> *const *const Backend {
     let results = const_ptr_as_ref(results);
     results.data_ptr()
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn qkrt_backend_search_results_least_busy(results: *const BackendSearchResults) -> *const Backend {
+pub unsafe extern "C" fn qkrt_backend_search_results_least_busy(
+    results: *const BackendSearchResults,
+) -> *const Backend {
     let results = const_ptr_as_ref(results);
     results.least_busy()
 }
@@ -213,7 +227,11 @@ pub unsafe extern "C" fn qkrt_job_free(job: *mut Job) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn qkrt_job_details(out: *mut *mut JobDetails, service: *const Service, job: *const Job) -> ExitCode {
+pub unsafe extern "C" fn qkrt_job_details(
+    out: *mut *mut JobDetails,
+    service: *const Service,
+    job: *const Job,
+) -> ExitCode {
     if out.is_null() {
         return ExitCode::NullPointerError;
     }
@@ -224,10 +242,7 @@ pub unsafe extern "C" fn qkrt_job_details(out: *mut *mut JobDetails, service: *c
         .unwrap();
     let service = const_ptr_as_ref(service);
     let job = const_ptr_as_ref(job);
-    let details = check_result!(rt.block_on(get_job_details(
-        service,
-        job,
-    )));
+    let details = check_result!(rt.block_on(get_job_details(service, job,)));
     *out = Box::into_raw(Box::new(details));
     ExitCode::Success
 }
@@ -242,17 +257,18 @@ pub unsafe extern "C" fn qkrt_job_details_free(details: *mut JobDetails) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn qkrt_job_status(out: *mut u32, service: *const Service, job: *const Job) -> ExitCode {
+pub unsafe extern "C" fn qkrt_job_status(
+    out: *mut u32,
+    service: *const Service,
+    job: *const Job,
+) -> ExitCode {
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
         .unwrap();
     let service = const_ptr_as_ref(service);
     let job = const_ptr_as_ref(job);
-    let status = check_result!(rt.block_on(get_job_status(
-        service,
-        job,
-    )));
+    let status = check_result!(rt.block_on(get_job_status(service, job,)));
     *out = status as u32;
     ExitCode::Success
 }

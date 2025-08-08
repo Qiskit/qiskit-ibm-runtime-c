@@ -50,7 +50,7 @@ pub fn generate_qpy_payload(circuit: &qiskit_circuit::Circuit) -> BinResult<Vec<
             in_circuit: true as u8,
             name: "meas".as_bytes().to_vec(),
             bit_indices: (0..circuit.num_clbits()).map(|x| x as i64).collect(),
-        }]
+        }],
     };
     let instructions =
         circuit
