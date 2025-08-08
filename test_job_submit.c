@@ -96,9 +96,11 @@ int main(int argc, char *arv[]) {
     Job *job;
     res = qkrt_sampler_job_run(&job, service, backends[selected_backend], qc, shots, NULL);
     if (res != 0) {
-        printf("run failed with code: %d\n", res);
+        printf("job submit failed with code: %d\n", res);
         goto cleanup_search;
     }
+
+    printf("job submit successful!\n");
 
     uint32_t status;
     do {

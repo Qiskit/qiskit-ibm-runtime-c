@@ -16,7 +16,7 @@ use ibmcloud_iam_api::apis::configuration::Configuration;
 use ibmcloud_iam_api::apis::token_operations_api::get_token_api_key;
 use ibmcloud_iam_api::models::token_response::TokenResponse;
 
-use crate::ExitCode;
+use crate::{log_debug, log_warn, ExitCode};
 use ibm_quantum_platform_api::models;
 use ibm_quantum_platform_api::models::job_response::Status;
 use std::collections::HashMap;
@@ -301,6 +301,10 @@ pub async fn get_account_from_config(
         None,
     )
     .await?;
+    log_debug(&format!(
+        "get_account_from_config response: {:?}",
+        &response
+    ));
     Ok(Account {
         config,
         token: response,
@@ -343,6 +347,7 @@ pub async fn list_instances(account: &Account) -> Result<Vec<Instance>, ServiceE
         None,      // is_project_resource
     )
     .await?;
+    log_debug(&format!("list_instances response: {:?}", &resp));
     let items = resp.items;
     Ok(items
         .into_iter()
@@ -468,7 +473,7 @@ pub async fn submit_sampler_job(
         ))),
     )
     .await?;
-    println!("result: {:?}", res);
+    log_debug(&format!("submit_sampler_job response: {:?}", res));
     Ok(Job {
         instance: backend.instance.clone(),
         response: res,
@@ -485,7 +490,7 @@ pub async fn get_job_details(service: &Service, job: &Job) -> Result<JobDetails,
         None,
     )
     .await?;
-    println!("details: {:?}", details);
+    log_debug(&format!("get_job_details response: {:?}", details));
     Ok(JobDetails(details))
 }
 
@@ -500,9 +505,14 @@ pub async fn get_backends(service: &Service) -> Result<BackendSearchResults, Ser
     for instance in &service.instances {
         let crn = instance.crn.to_str().unwrap();
         let Ok(resp) = list_backends(&service.quantum_config, Some("2025-06-01"), crn).await else {
-            println!("Failed to list backends for crn: {:?}", crn);
+            let instance_name = instance.name.to_str().unwrap();
+            log_warn(&format!(
+                "Failed to list backends for instance: {} ({})",
+                instance_name, crn
+            ));
             continue;
         };
+        log_debug(&format!("get_backends response: {:?}", &resp));
         for backend in resp.devices.into_iter().flatten() {
             let backend = Box::new(Backend {
                 name: CString::new(backend.name.as_str()).unwrap(),

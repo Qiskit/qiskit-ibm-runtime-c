@@ -65,3 +65,35 @@ pub enum ExitCode {
     /// The IBM IAM returned a 409.
     IAMAPIConflict = 305,
 }
+
+fn log_err(e: &impl AsRef<str>) {
+    match std::env::var("QISKIT_IBM_RUNTIME_LOG_LEVEL") {
+        Ok(level)
+            if matches!(
+                level.to_uppercase().as_str(),
+                "ERROR" | "WARNING" | "INFO" | "DEBUG"
+            ) =>
+        {
+            eprintln!("** ERROR: {}", e.as_ref())
+        }
+        _ => (),
+    }
+}
+
+fn log_warn(e: &impl AsRef<str>) {
+    match std::env::var("QISKIT_IBM_RUNTIME_LOG_LEVEL") {
+        Ok(level) if matches!(level.to_uppercase().as_str(), "WARNING" | "INFO" | "DEBUG") => {
+            eprintln!("* WARNING: {}", e.as_ref())
+        }
+        _ => (),
+    }
+}
+
+fn log_debug(e: &impl AsRef<str>) {
+    match std::env::var("QISKIT_IBM_RUNTIME_LOG_LEVEL") {
+        Ok(level) if matches!(level.to_uppercase().as_str(), "DEBUG") => {
+            eprintln!("[DEBUG]: {}", e.as_ref())
+        }
+        _ => (),
+    }
+}

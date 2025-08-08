@@ -3,7 +3,7 @@ use crate::generate_qpy::generate_qpy_payload;
 use crate::pointers::const_ptr_as_ref;
 use crate::qiskit_circuit::Circuit;
 use crate::qiskit_ffi::QkCircuit;
-use crate::ExitCode;
+use crate::{log_err, ExitCode};
 use std::ffi::{c_char, CStr};
 use std::fs::File;
 use std::io::prelude::*;
@@ -14,18 +14,12 @@ use crate::service::{
     submit_sampler_job, Backend, BackendSearchResults, Job, JobDetails, Service, ServiceError,
 };
 
-fn log_err(e: &ServiceError) {
-    if !std::env::var("QISKIT_IBM_RUNTIME_LOG_LEVEL").is_err() {
-        eprintln!("** ERROR: {:?}", e)
-    }
-}
-
 macro_rules! check_result {
     ($expr:expr) => {
         match $expr {
             Ok(val) => val,
             Err(e) => {
-                log_err(&e);
+                log_err(&format!("{:?}", &e));
                 return e.code();
             }
         }

@@ -283,7 +283,6 @@ pub async fn create_job(
     req_builder = req_builder.json(&p_create_job_request);
 
     let req = req_builder.build()?;
-    println!("raw request: {:?}", req);
     let resp = configuration.client.execute(req).await?;
 
     let status = resp.status();
@@ -546,7 +545,6 @@ pub async fn get_job_details_jid(
     req_builder = req_builder.header("Service-CRN", crn);
 
     let req = req_builder.build()?;
-    println!("raw request (job details): {:?}", req);
     let resp = configuration.client.execute(req).await?;
 
     let status = resp.status();
