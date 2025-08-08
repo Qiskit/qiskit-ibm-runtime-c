@@ -24,7 +24,13 @@ extern uint64_t qkrt_backend_search_results_length(BackendSearchResults *results
 
 extern Backend** qkrt_backend_search_results_data(BackendSearchResults *results);
 
+extern Backend* qkrt_backend_search_results_least_busy(BackendSearchResults *results);
+
 extern char* qkrt_backend_name(Backend *backend);
+
+extern char* qkrt_backend_instance_crn(Backend *backend);
+
+extern char* qkrt_backend_instance_name(Backend *backend);
 
 extern int32_t qkrt_sampler_job_run(Job **out, Service *service, Backend *backend, QkCircuit *circuit, int32_t shots, char *runtime);
 
@@ -75,14 +81,17 @@ int main(int argc, char *arv[]) {
     Backend **backends = qkrt_backend_search_results_data(results);
     printf("found backends:\n");
     for (uint64_t i = 0; i < result_count; i++) {
-        printf("  [%llu] %s\n", i, qkrt_backend_name(backends[i]));
+        printf("  [%llu] %s (%s)\n", i, qkrt_backend_name(backends[i]), qkrt_backend_instance_name(backends[i]));
     }
 
+    Backend *least_busy = qkrt_backend_search_results_least_busy(results);
+    printf("\nthe least busy is: %s (%s)", qkrt_backend_name(least_busy), qkrt_backend_instance_name(least_busy));
+
     uint64_t selected_backend = 0;
-    printf("\n enter the index of the backend to select: ");
+    printf("\nenter the index of the backend to select: ");
     scanf("%llu", &selected_backend);
 
-    printf("\n you have selected backend: %s\n", qkrt_backend_name(backends[selected_backend]));
+    printf("\nyou have selected backend: %s\n", qkrt_backend_name(backends[selected_backend]));
 
     Job *job;
     res = qkrt_sampler_job_run(&job, service, backends[selected_backend], qc, shots, NULL);

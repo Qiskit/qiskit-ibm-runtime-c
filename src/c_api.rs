@@ -87,14 +87,12 @@ pub unsafe extern "C" fn qkrt_service_new(out: *mut *mut Service) -> ExitCode {
         .build()
         .unwrap();
     let account = check_result!(rt.block_on(get_account_from_config(None, None)));
-    let crns = if let Some(instance) = &account.config.instance {
-        vec![instance.clone()]
-    } else {
-        // The user's config does not specify an instance, so use all instances accessible
-        // to their account.
-        check_result!(rt.block_on(list_instances(&account)))
-    };
-    *out = Box::into_raw(Box::new(Service::new(account, crns)));
+    let mut instances = check_result!(rt.block_on(list_instances(&account)));
+    if let Some(instance) = &account.config.instance {
+        // Filter-out any instance that doesn't match the user's config.
+        instances = instances.into_iter().filter(|x| &x.crn.to_str().unwrap() == &instance).collect()
+    }
+    *out = Box::into_raw(Box::new(Service::new(account, instances)));
     ExitCode::Success
 }
 
@@ -144,9 +142,27 @@ pub unsafe extern "C" fn qkrt_backend_search_results_data(results: *const Backen
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn qkrt_backend_search_results_least_busy(results: *const BackendSearchResults) -> *const Backend {
+    let results = const_ptr_as_ref(results);
+    results.least_busy()
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn qkrt_backend_name(backend: *const Backend) -> *const c_char {
     let backend = const_ptr_as_ref(backend);
-    backend.name.as_ptr()
+    backend.name()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_backend_instance_crn(backend: *const Backend) -> *const c_char {
+    let backend = const_ptr_as_ref(backend);
+    backend.instance_crn()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_backend_instance_name(backend: *const Backend) -> *const c_char {
+    let backend = const_ptr_as_ref(backend);
+    backend.instance_name()
 }
 
 #[no_mangle]
