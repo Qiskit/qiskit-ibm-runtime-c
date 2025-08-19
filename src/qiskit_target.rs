@@ -10,9 +10,10 @@ pub enum ISAGate {
     RX = 8,
     I = 2,
     CX = 22,
+    RZZ = 41,
 }
 
-pub struct Target(*mut qiskit_ffi::QkTarget);
+pub struct Target(pub(crate) *mut qiskit_ffi::QkTarget);
 
 impl Drop for Target {
     fn drop(&mut self) {

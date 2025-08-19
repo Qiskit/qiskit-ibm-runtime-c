@@ -78,7 +78,7 @@ impl JobDetails {
 
 #[derive(Clone, Debug)]
 pub struct Backend {
-    name: CString,
+    pub(crate) name: CString,
     instance: Instance,
     response: BackendsResponseV2DevicesInner,
 }
@@ -366,15 +366,27 @@ pub async fn list_instances(account: &Account) -> Result<Vec<Instance>, ServiceE
         .collect())
 }
 
-pub async fn get_backend(service: &Service, backend: &str) -> crate::qiskit_target::Target {
-    let backend_configuration =
-        get_backend_configuration(&service.quantum_config, backend, Some("2025-06-01"))
-            .await
-            .unwrap();
-    let backend_properties =
-        get_backend_properties(&service.quantum_config, backend, Some("2025-06-01"), None)
-            .await
-            .unwrap();
+pub async fn get_backend(service: &Service, backend: &Backend) -> crate::qiskit_target::Target {
+    let name = backend.response.name.clone();
+    let crn = backend.instance.crn.to_str().unwrap();
+
+    let backend_configuration = get_backend_configuration(
+        &service.quantum_config,
+        name.as_str(),
+        crn,
+        Some("2025-06-01"),
+    )
+    .await
+    .unwrap();
+    let backend_properties = get_backend_properties(
+        &service.quantum_config,
+        name.as_str(),
+        crn,
+        Some("2025-06-01"),
+        None,
+    )
+    .await
+    .unwrap();
     let num_qubits = backend_configuration["n_qubits"]
         .as_u64()
         .unwrap()
@@ -414,6 +426,7 @@ pub async fn get_backend(service: &Service, backend: &str) -> crate::qiskit_targ
             })
             .or_insert(vec![(qargs, gate_duration, gate_error)]);
     }
+
     let mut target = crate::qiskit_target::Target::new(num_qubits);
     for (gate, props) in gate_prop_map {
         let gate = if gate == "x" {
@@ -432,8 +445,20 @@ pub async fn get_backend(service: &Service, backend: &str) -> crate::qiskit_targ
             crate::qiskit_target::ISAGate::I
         } else if gate == "cx" {
             crate::qiskit_target::ISAGate::CX
+        } else if gate == "rzz" {
+            // TODO: Add RZZ support when we have angle wrapping in
+            // Qiskit's target and C transpiler.
+            //            crate::qiskit_target::ISAGate::RZZ
+            continue;
+        } else if gate == "reset" {
+            target.add_reset(
+                props
+                    .into_iter()
+                    .map(|(qubits, dur, err)| (qubits[0], [dur, err])),
+            );
+            continue;
         } else {
-            panic!("What is a {gate}");
+            panic!("What is a {gate}?");
         };
         target.add_gate(
             gate,
@@ -442,6 +467,26 @@ pub async fn get_backend(service: &Service, backend: &str) -> crate::qiskit_targ
                 .map(|(qubits, dur, err)| (qubits, [dur, err])),
         );
     }
+    let measure_props = backend_properties["qubits"]
+        .as_array()
+        .unwrap()
+        .into_iter()
+        .enumerate()
+        .map(|(idx, props)| {
+            let mut error = None;
+            let mut duration = None;
+            for prop in props.as_array().unwrap() {
+                let prop = prop.as_object().unwrap();
+                let name = prop["name"].as_str().unwrap();
+                if name == "readout_error" {
+                    error = prop["value"].as_f64();
+                } else if name == "readout_length" {
+                    duration = prop["value"].as_f64();
+                }
+            }
+            (idx as u32, [duration, error])
+        });
+    target.add_measure(measure_props);
     target
 }
 

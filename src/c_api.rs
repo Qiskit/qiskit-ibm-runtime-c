@@ -2,7 +2,7 @@ use crate::generate_job_params::create_sampler_job_payload;
 use crate::generate_qpy::generate_qpy_payload;
 use crate::pointers::const_ptr_as_ref;
 use crate::qiskit_circuit::Circuit;
-use crate::qiskit_ffi::QkCircuit;
+use crate::qiskit_ffi::{QkCircuit, QkTarget};
 use crate::{log_err, ExitCode};
 use std::ffi::{c_char, CStr};
 use std::fs::File;
@@ -10,8 +10,9 @@ use std::io::prelude::*;
 use std::path::Path;
 
 use crate::service::{
-    get_account_from_config, get_backends, get_job_details, get_job_status, list_instances,
-    submit_sampler_job, Backend, BackendSearchResults, Job, JobDetails, Service, ServiceError,
+    get_account_from_config, get_backend, get_backends, get_job_details, get_job_status,
+    list_instances, submit_sampler_job, Backend, BackendSearchResults, Job, JobDetails, Service,
+    ServiceError,
 };
 
 macro_rules! check_result {
@@ -153,6 +154,23 @@ pub unsafe extern "C" fn qkrt_backend_search_results_least_busy(
 ) -> *const Backend {
     let results = const_ptr_as_ref(results);
     results.least_busy()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_get_backend_target(
+    service: *const Service,
+    backend: *const Backend,
+) -> *const QkTarget {
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+    let service = const_ptr_as_ref(service);
+    let backend = const_ptr_as_ref(backend);
+    let result = rt.block_on(get_backend(service, backend));
+    let output = result.0;
+    std::mem::forget(result);
+    output
 }
 
 #[no_mangle]

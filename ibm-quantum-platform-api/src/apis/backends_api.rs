@@ -56,6 +56,7 @@ pub enum ListBackendsError {
 pub async fn get_backend_configuration(
     configuration: &configuration::Configuration,
     id: &str,
+    crn: &str,
     ibm_api_version: Option<&str>,
 ) -> Result<std::collections::HashMap<String, serde_json::Value>, Error<GetBackendConfigurationError>>
 {
@@ -87,30 +88,7 @@ pub async fn get_backend_configuration(
         };
         req_builder = req_builder.header("Authorization", value);
     };
-    if let Some(ref apikey) = configuration.api_key {
-        let key = apikey.key.clone();
-        let value = match apikey.prefix {
-            Some(ref prefix) => format!("{} {}", prefix, key),
-            None => key,
-        };
-        req_builder = req_builder.header("Backend-Authentication", value);
-    };
-    if let Some(ref apikey) = configuration.api_key {
-        let key = apikey.key.clone();
-        let value = match apikey.prefix {
-            Some(ref prefix) => format!("{} {}", prefix, key),
-            None => key,
-        };
-        req_builder = req_builder.header("external-service-token", value);
-    };
-    if let Some(ref apikey) = configuration.api_key {
-        let key = apikey.key.clone();
-        let value = match apikey.prefix {
-            Some(ref prefix) => format!("{} {}", prefix, key),
-            None => key,
-        };
-        req_builder = req_builder.header("Service-CRN", value);
-    };
+    req_builder = req_builder.header("Service-CRN", crn.to_string());
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;
@@ -145,6 +123,7 @@ pub async fn get_backend_configuration(
 pub async fn get_backend_defaults(
     configuration: &configuration::Configuration,
     id: &str,
+    crn: &str,
     ibm_api_version: Option<&str>,
 ) -> Result<std::collections::HashMap<String, serde_json::Value>, Error<GetBackendDefaultsError>> {
     // add a prefix to parameters to efficiently prevent name collisions
@@ -175,30 +154,23 @@ pub async fn get_backend_defaults(
         };
         req_builder = req_builder.header("Authorization", value);
     };
-    if let Some(ref apikey) = configuration.api_key {
-        let key = apikey.key.clone();
-        let value = match apikey.prefix {
-            Some(ref prefix) => format!("{} {}", prefix, key),
-            None => key,
-        };
-        req_builder = req_builder.header("Backend-Authentication", value);
-    };
-    if let Some(ref apikey) = configuration.api_key {
-        let key = apikey.key.clone();
-        let value = match apikey.prefix {
-            Some(ref prefix) => format!("{} {}", prefix, key),
-            None => key,
-        };
-        req_builder = req_builder.header("external-service-token", value);
-    };
-    if let Some(ref apikey) = configuration.api_key {
-        let key = apikey.key.clone();
-        let value = match apikey.prefix {
-            Some(ref prefix) => format!("{} {}", prefix, key),
-            None => key,
-        };
-        req_builder = req_builder.header("Service-CRN", value);
-    };
+    //    if let Some(ref apikey) = configuration.api_key {
+    //        let key = apikey.key.clone();
+    //        let value = match apikey.prefix {
+    //            Some(ref prefix) => format!("{} {}", prefix, key),
+    //            None => key,
+    //        };
+    //        req_builder = req_builder.header("Backend-Authentication", value);
+    //    };
+    //    if let Some(ref apikey) = configuration.api_key {
+    //        let key = apikey.key.clone();
+    //        let value = match apikey.prefix {
+    //            Some(ref prefix) => format!("{} {}", prefix, key),
+    //            None => key,
+    //        };
+    //        req_builder = req_builder.header("external-service-token", value);
+    //    };
+    req_builder = req_builder.header("Service-CRN", crn.to_string());
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;
@@ -233,6 +205,7 @@ pub async fn get_backend_defaults(
 pub async fn get_backend_properties(
     configuration: &configuration::Configuration,
     id: &str,
+    crn: &str,
     ibm_api_version: Option<&str>,
     updated_before: Option<String>,
 ) -> Result<std::collections::HashMap<String, serde_json::Value>, Error<GetBackendPropertiesError>>
@@ -269,30 +242,7 @@ pub async fn get_backend_properties(
         };
         req_builder = req_builder.header("Authorization", value);
     };
-    if let Some(ref apikey) = configuration.api_key {
-        let key = apikey.key.clone();
-        let value = match apikey.prefix {
-            Some(ref prefix) => format!("{} {}", prefix, key),
-            None => key,
-        };
-        req_builder = req_builder.header("Backend-Authentication", value);
-    };
-    if let Some(ref apikey) = configuration.api_key {
-        let key = apikey.key.clone();
-        let value = match apikey.prefix {
-            Some(ref prefix) => format!("{} {}", prefix, key),
-            None => key,
-        };
-        req_builder = req_builder.header("external-service-token", value);
-    };
-    if let Some(ref apikey) = configuration.api_key {
-        let key = apikey.key.clone();
-        let value = match apikey.prefix {
-            Some(ref prefix) => format!("{} {}", prefix, key),
-            None => key,
-        };
-        req_builder = req_builder.header("Service-CRN", value);
-    };
+    req_builder = req_builder.header("Service-CRN", crn.to_string());
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;
