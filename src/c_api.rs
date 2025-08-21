@@ -4,15 +4,15 @@ use crate::pointers::const_ptr_as_ref;
 use crate::qiskit_circuit::Circuit;
 use crate::qiskit_ffi::{QkCircuit, QkTarget};
 use crate::{log_err, ExitCode};
-use std::ffi::{c_char, CStr};
+use std::ffi::{c_char, CStr, CString};
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
 
 use crate::service::{
-    get_account_from_config, get_backend, get_backends, get_job_details, get_job_status,
+    get_account_from_config, get_backend, get_backends, get_job_details, get_job_status, get_job_results,
     list_instances, submit_sampler_job, Backend, BackendSearchResults, Job, JobDetails, Service,
-    ServiceError,
+    ServiceError, Samples
 };
 
 macro_rules! check_result {
@@ -257,6 +257,49 @@ pub unsafe extern "C" fn qkrt_job_details(
     let details = check_result!(rt.block_on(get_job_details(service, job,)));
     *out = Box::into_raw(Box::new(details));
     ExitCode::Success
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_job_results(
+    out: *mut *mut Samples,
+    service: *const Service,
+    job: *const Job,
+) -> ExitCode {
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+    let service = const_ptr_as_ref(service);
+    let job = const_ptr_as_ref(job);
+    let samples = check_result!(rt.block_on(get_job_results(service, job,)));
+    let out_samples = Box::into_raw(Box::new(samples));
+    *out = out_samples;
+    ExitCode::Success
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_samples_num_samples(samples: *const Samples) -> usize {
+    unsafe { const_ptr_as_ref(samples) }.0.len()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_samples_get_sample(samples: *const Samples, index: usize) -> *mut c_char {
+    let samples = unsafe { const_ptr_as_ref(samples) };
+    let sample: &String = &samples.0[index];
+    let c_string = CString::new(sample.as_bytes()).unwrap();
+    c_string.into_raw()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_str_free(string: *mut c_char) {
+    let _ = CString::from_raw(string);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_samples_free(samples: *mut Samples) {
+    if !samples.is_null() {
+        drop(Box::from_raw(samples))
+    }
 }
 
 #[no_mangle]

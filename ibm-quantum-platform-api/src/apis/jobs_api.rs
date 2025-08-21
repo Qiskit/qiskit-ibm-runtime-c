@@ -664,9 +664,10 @@ pub async fn get_job_metrics_jid(
 /// Return the final result from this job.
 pub async fn get_job_results_jid(
     configuration: &configuration::Configuration,
+    crn: &str,
     id: &str,
     ibm_api_version: Option<&str>,
-) -> Result<String, Error<GetJobResultsJidError>> {
+) -> Result<models::SamplerV2Result, Error<GetJobResultsJidError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_id = id;
     let p_ibm_api_version = ibm_api_version;
@@ -695,30 +696,31 @@ pub async fn get_job_results_jid(
         };
         req_builder = req_builder.header("Authorization", value);
     };
-    if let Some(ref apikey) = configuration.api_key {
-        let key = apikey.key.clone();
-        let value = match apikey.prefix {
-            Some(ref prefix) => format!("{} {}", prefix, key),
-            None => key,
-        };
-        req_builder = req_builder.header("Backend-Authentication", value);
-    };
-    if let Some(ref apikey) = configuration.api_key {
-        let key = apikey.key.clone();
-        let value = match apikey.prefix {
-            Some(ref prefix) => format!("{} {}", prefix, key),
-            None => key,
-        };
-        req_builder = req_builder.header("external-service-token", value);
-    };
-    if let Some(ref apikey) = configuration.api_key {
-        let key = apikey.key.clone();
-        let value = match apikey.prefix {
-            Some(ref prefix) => format!("{} {}", prefix, key),
-            None => key,
-        };
-        req_builder = req_builder.header("Service-CRN", value);
-    };
+//    if let Some(ref apikey) = configuration.api_key {
+//        let key = apikey.key.clone();
+//        let value = match apikey.prefix {
+//            Some(ref prefix) => format!("{} {}", prefix, key),
+//            None => key,
+//        };
+//        req_builder = req_builder.header("Backend-Authentication", value);
+//    };
+//    if let Some(ref apikey) = configuration.api_key {
+//        let key = apikey.key.clone();
+//        let value = match apikey.prefix {
+//            Some(ref prefix) => format!("{} {}", prefix, key),
+//            None => key,
+//        };
+//        req_builder = req_builder.header("external-service-token", value);
+//    };
+//    if let Some(ref apikey) = configuration.api_key {
+//        let key = apikey.key.clone();
+//        let value = match apikey.prefix {
+//            Some(ref prefix) => format!("{} {}", prefix, key),
+//            None => key,
+//        };
+//        req_builder = req_builder.header("Service-CRN", value);
+//    };
+    req_builder = req_builder.header("Service-CRN", crn);
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;
@@ -735,7 +737,7 @@ pub async fn get_job_results_jid(
         let content = resp.text().await?;
         match content_type {
             ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => Ok(content),
+            ContentType::Text => serde_json::from_str(&content).map_err(Error::from),
             ContentType::Unsupported(unknown_type) => Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `String`")))),
         }
     } else {

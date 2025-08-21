@@ -4,6 +4,7 @@ typedef struct Service Service;
 typedef struct Job Job;
 typedef struct Backend Backend;
 typedef struct BackendSearchResults BackendSearchResults;
+typedef struct Samples Samples;
 
 extern int32_t qkrt_service_new(Service **out);
 
@@ -34,3 +35,13 @@ extern int32_t qkrt_job_status(uint32_t *out, Service *service, Job *job);
 extern void qkrt_job_free(Job *job);
 
 extern void generate_qpy(QkCircuit *circuit, char *filename);
+
+extern int32_t qkrt_job_results(Samples **out, Service *service, Job *job);
+
+extern size_t qkrt_samples_num_samples(Samples *samples);
+
+extern char* qkrt_samples_get_sample(Samples *samples, size_t index);
+
+extern void qkrt_samples_free(Samples *samples);
+
+extern void qkrt_str_free(char *string);

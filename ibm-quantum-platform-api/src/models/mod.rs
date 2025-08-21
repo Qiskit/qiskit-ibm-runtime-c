@@ -172,3 +172,5 @@ pub mod usage;
 pub use self::usage::Usage;
 pub mod version_response;
 pub use self::version_response::VersionResponse;
+pub mod sampler_v2_job_result;
+pub use self::sampler_v2_job_result::SamplerV2Result;

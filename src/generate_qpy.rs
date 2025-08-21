@@ -66,7 +66,8 @@ pub fn generate_qpy_payload(circuit: &qiskit_circuit::Circuit) -> BinResult<Vec<
                     "cx" => "CXGate",
                     "rz" => "RZGate",
                     "id" => "IGate",
-                    _ => panic!("Not an ISA circuit"),
+                    "rx" => "RXGate",
+                    _ => panic!("Not an ISA circuit {}", inst.name),
                 };
                 let num_ctrl_qubits = if inst.name.as_str() == "cx" || inst.name.as_str() == "cz" {
                     1

@@ -6,7 +6,7 @@ use std::path::Path;
 use ibm_quantum_platform_api::apis::backends_api::{
     get_backend_configuration, get_backend_properties, list_backends,
 };
-use ibm_quantum_platform_api::apis::jobs_api::{create_job, get_job_details_jid};
+use ibm_quantum_platform_api::apis::jobs_api::{create_job, get_job_details_jid, get_job_results_jid};
 use ibm_quantum_platform_api::models::{
     BackendsResponseV2DevicesInner, CreateJob200Response, CreateJobRequest,
 };
@@ -19,6 +19,7 @@ use ibmcloud_iam_api::models::token_response::TokenResponse;
 use crate::{log_debug, log_warn, ExitCode};
 use ibm_quantum_platform_api::models;
 use ibm_quantum_platform_api::models::job_response::Status;
+use ibm_quantum_platform_api::models::SamplerV2Result;
 use std::collections::HashMap;
 use std::error;
 use std::ffi::{c_char, CString};
@@ -74,6 +75,11 @@ impl JobDetails {
             Status::Failed => JobStatus::Failed,
         }
     }
+
+    pub fn job_id(&self) -> &str {
+        &self.0.id
+    }
+
 }
 
 #[derive(Clone, Debug)]
@@ -537,6 +543,23 @@ pub async fn get_job_details(service: &Service, job: &Job) -> Result<JobDetails,
     .await?;
     log_debug(&format!("get_job_details response: {:?}", details));
     Ok(JobDetails(details))
+}
+
+#[derive(Debug)]
+pub struct Samples(pub Vec<String>);
+
+pub async fn get_job_results(service: &Service, job: &Job) -> Result<Samples, ServiceError> {
+    let crn = job.instance.crn.to_str().unwrap();
+    let details = get_job_results_jid(
+        &service.quantum_config,
+        crn,
+        &job.response.id,
+        Some("2025-06-01"),
+    )
+    .await?;
+    log_debug(&format!("get_job_result response: {:?}", details));
+    let res = Ok(Samples(details.results.iter().flat_map(|x| x.data["meas"].samples.iter()).cloned().collect()));
+    res
 }
 
 pub async fn get_job_status(service: &Service, job: &Job) -> Result<JobStatus, ServiceError> {
