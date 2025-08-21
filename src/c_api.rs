@@ -10,9 +10,9 @@ use std::io::prelude::*;
 use std::path::Path;
 
 use crate::service::{
-    get_account_from_config, get_backend, get_backends, get_job_details, get_job_status, get_job_results,
-    list_instances, submit_sampler_job, Backend, BackendSearchResults, Job, JobDetails, Service,
-    ServiceError, Samples
+    get_account_from_config, get_backend, get_backends, get_job_details, get_job_results,
+    get_job_status, list_instances, submit_sampler_job, Backend, BackendSearchResults, Job,
+    JobDetails, Samples, Service, ServiceError,
 };
 
 macro_rules! check_result {
@@ -283,7 +283,10 @@ pub unsafe extern "C" fn qkrt_samples_num_samples(samples: *const Samples) -> us
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn qkrt_samples_get_sample(samples: *const Samples, index: usize) -> *mut c_char {
+pub unsafe extern "C" fn qkrt_samples_get_sample(
+    samples: *const Samples,
+    index: usize,
+) -> *mut c_char {
     let samples = unsafe { const_ptr_as_ref(samples) };
     let sample: &String = &samples.0[index];
     let c_string = CString::new(sample.as_bytes()).unwrap();

@@ -6,7 +6,9 @@ use std::path::Path;
 use ibm_quantum_platform_api::apis::backends_api::{
     get_backend_configuration, get_backend_properties, list_backends,
 };
-use ibm_quantum_platform_api::apis::jobs_api::{create_job, get_job_details_jid, get_job_results_jid};
+use ibm_quantum_platform_api::apis::jobs_api::{
+    create_job, get_job_details_jid, get_job_results_jid,
+};
 use ibm_quantum_platform_api::models::{
     BackendsResponseV2DevicesInner, CreateJob200Response, CreateJobRequest,
 };
@@ -79,7 +81,6 @@ impl JobDetails {
     pub fn job_id(&self) -> &str {
         &self.0.id
     }
-
 }
 
 #[derive(Clone, Debug)]
@@ -558,7 +559,14 @@ pub async fn get_job_results(service: &Service, job: &Job) -> Result<Samples, Se
     )
     .await?;
     log_debug(&format!("get_job_result response: {:?}", details));
-    let res = Ok(Samples(details.results.iter().flat_map(|x| x.data["meas"].samples.iter()).cloned().collect()));
+    let res = Ok(Samples(
+        details
+            .results
+            .iter()
+            .flat_map(|x| x.data["meas"].samples.iter())
+            .cloned()
+            .collect(),
+    ));
     res
 }
 

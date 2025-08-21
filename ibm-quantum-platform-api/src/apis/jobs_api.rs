@@ -696,30 +696,30 @@ pub async fn get_job_results_jid(
         };
         req_builder = req_builder.header("Authorization", value);
     };
-//    if let Some(ref apikey) = configuration.api_key {
-//        let key = apikey.key.clone();
-//        let value = match apikey.prefix {
-//            Some(ref prefix) => format!("{} {}", prefix, key),
-//            None => key,
-//        };
-//        req_builder = req_builder.header("Backend-Authentication", value);
-//    };
-//    if let Some(ref apikey) = configuration.api_key {
-//        let key = apikey.key.clone();
-//        let value = match apikey.prefix {
-//            Some(ref prefix) => format!("{} {}", prefix, key),
-//            None => key,
-//        };
-//        req_builder = req_builder.header("external-service-token", value);
-//    };
-//    if let Some(ref apikey) = configuration.api_key {
-//        let key = apikey.key.clone();
-//        let value = match apikey.prefix {
-//            Some(ref prefix) => format!("{} {}", prefix, key),
-//            None => key,
-//        };
-//        req_builder = req_builder.header("Service-CRN", value);
-//    };
+    //    if let Some(ref apikey) = configuration.api_key {
+    //        let key = apikey.key.clone();
+    //        let value = match apikey.prefix {
+    //            Some(ref prefix) => format!("{} {}", prefix, key),
+    //            None => key,
+    //        };
+    //        req_builder = req_builder.header("Backend-Authentication", value);
+    //    };
+    //    if let Some(ref apikey) = configuration.api_key {
+    //        let key = apikey.key.clone();
+    //        let value = match apikey.prefix {
+    //            Some(ref prefix) => format!("{} {}", prefix, key),
+    //            None => key,
+    //        };
+    //        req_builder = req_builder.header("external-service-token", value);
+    //    };
+    //    if let Some(ref apikey) = configuration.api_key {
+    //        let key = apikey.key.clone();
+    //        let value = match apikey.prefix {
+    //            Some(ref prefix) => format!("{} {}", prefix, key),
+    //            None => key,
+    //        };
+    //        req_builder = req_builder.header("Service-CRN", value);
+    //    };
     req_builder = req_builder.header("Service-CRN", crn);
 
     let req = req_builder.build()?;
