@@ -14,7 +14,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "qiskit_ibm_runtime.h"
+#include <qiskit_ibm_runtime/qiskit_ibm_runtime.h>
 
 void build_lucj(QkCircuit *qc);
 

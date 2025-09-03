@@ -21,17 +21,25 @@ Compilation requires the following tools:
 * gcc
 * cbindgen
 * make
+* cmake
 
 #### Build
 
 To build all tests, you can run the following command in qiskit-ibm-runtime-rs root,
 ```
-make build
+mkdir build && cd build
+cmake ..
+make
 ```
+
+#### Samples
+
+There are several interactive commandline sample programs you can run in `/samples`.
+These are built automatically to the root of the build folder.
 
 #### Test
 
 To run all tests, you can run the following command in qiskit-ibm-runtime-rs root,
 ```
-make test
+ctest
 ```

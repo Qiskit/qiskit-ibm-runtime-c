@@ -1,35 +1,43 @@
 [workspace]
-members = ["ibm-quantum-platform-api", "ibmcloud-iam-api", "ibmcloud-global-search-api"]
+members = ["crates/*"]
 resolver = "2"
-
-[package]
-name = "qiskit-ibm-runtime"
-version = "0.38.0"
-readme = "README.md"
-edition.workspace = true
-rust-version.workspace = true
-license.workspace = true
-
-[lib]
-name = "qiskit_ibm_runtime"
-crate-type = ["cdylib"]
 
 [workspace.package]
 edition = "2021"
+version = "0.38.0"
 rust-version = "1.79"
 license = "Apache-2.0"
 
-[dependencies]
+[workspace.dependencies]
 binrw = "0.15"
 base64-simd = "0.8"
 flate2 = "1.0"
-ibm-quantum-platform-api = { path = "ibm-quantum-platform-api"}
-ibmcloud-iam-api = { path = "ibmcloud-iam-api"}
-ibmcloud-global-search-api = { path = "ibmcloud-global-search-api"}
 serde_json = "1.0"
 serde = "1.0"
 reqwest = "^0.12"
 tokio = { version = "1", features = ["full"] }
+
+# These are our own crates.
+ibm-quantum-platform-api = { path = "crates/ibm-quantum-platform-api"}
+ibmcloud-iam-api = { path = "crates/ibmcloud-iam-api"}
+ibmcloud-global-search-api = { path = "crates/ibmcloud-global-search-api"}
+
+[workspace.lints.clippy]
+# The lint forbids things like `if a < b {} else if a == b {}`, and suggests matching on `a.cmp(&b)`
+# which uses the `::std::cmp::Ordering` enum as a return.  Both styles are acceptable, and the `if`
+# chain can be more legible to people.
+comparison-chain = "allow"
+# Forbid `{,e}print{,ln}!` calls.  These can be allowed locally if absolutely required, but the
+# vast majority of these are debug statements that we forget about.
+print_stdout = "deny"
+print_stderr = "deny"
+
+[workspace.lints.rust]
+# In Rust 2021, the bodies of `unsafe fn` may use `unsafe` functions themselves without marking
+# them.  This is an overload of the word: `unsafe fn` is documenting something for the caller, but
+# that doesn't mean the entire function body is unsafe.  Denying this lint (which becomes
+# warn-by-default in Rust 2024) means `unsafe fn` bodies still must use `unsafe {}` like normal.
+unsafe_op_in_unsafe_fn = "deny"
 
 [profile.release]
 opt-level = 3

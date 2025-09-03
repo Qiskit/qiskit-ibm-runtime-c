@@ -1,0 +1,24 @@
+[package]
+name = "qiskit-ibm-runtime"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[lib]
+name = "qiskit_ibm_runtime"
+crate-type = ["cdylib"]
+
+[dependencies]
+binrw.workspace = true
+base64-simd.workspace = true
+flate2.workspace = true
+serde_json.workspace = true
+serde.workspace = true
+reqwest.workspace = true
+tokio.workspace = true
+
+ibm-quantum-platform-api.workspace = true
+ibmcloud-iam-api.workspace = true
+ibmcloud-global-search-api.workspace = true
+
