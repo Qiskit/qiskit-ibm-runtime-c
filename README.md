@@ -39,7 +39,7 @@ These are built automatically to the root of the build folder.
 
 #### Test
 
-To run all tests, you can run the following command in qiskit-ibm-runtime-rs root,
+To run all tests, you can run the following command from within the build tree,
 ```
 ctest
 ```
