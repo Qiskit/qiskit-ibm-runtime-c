@@ -43,3 +43,12 @@ To run all tests, you can run the following command from within the build tree,
 ```
 ctest
 ```
+
+#### License
+
+This software is licensed under the Apache 2.0 license.
+
+While most source files include a license header, some generated source files do not
+(including sources from crates `ibm-quantum-platform-api`, `ibmcloud-global-search-api`,
+and `ibmcloud-iam-api`). All of these sources are still provided under Apache 2.0.
+

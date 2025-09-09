@@ -1,5 +1,14 @@
-// Generate a job create payload to be submitted with curl. This must be a
-// static isa circuit otherwise it will panic.
+// This code is part of Qiskit.
+//
+// (C) Copyright IBM 2025
+//
+// This code is licensed under the Apache License, Version 2.0. You may
+// obtain a copy of this license in the LICENSE.txt file in the root directory
+// of this source tree or at http://www.apache.org/licenses/LICENSE-2.0.
+//
+// Any modifications or derivative works of this code must retain this
+// copyright notice, and modified files need to carry a notice indicating
+// that they have been altered from the originals.
 
 #include <qiskit.h>
 #include <stdint.h>
@@ -13,34 +22,6 @@ typedef struct Service Service;
 typedef struct Job Job;
 typedef struct Backend Backend;
 typedef struct BackendSearchResults BackendSearchResults;
-
-//extern int32_t qkrt_service_new(Service **out);
-//
-//extern void qkrt_service_free(Service *service);
-//
-//extern int32_t qkrt_backend_search(BackendSearchResults **out, Service *service);
-//
-//extern void qkrt_backend_search_results_free(BackendSearchResults *results);
-//
-//extern uint64_t qkrt_backend_search_results_length(BackendSearchResults *results);
-//
-//extern Backend** qkrt_backend_search_results_data(BackendSearchResults *results);
-//
-//extern Backend* qkrt_backend_search_results_least_busy(BackendSearchResults *results);
-//
-//extern char* qkrt_backend_name(Backend *backend);
-//
-//extern char* qkrt_backend_instance_crn(Backend *backend);
-//
-//extern char* qkrt_backend_instance_name(Backend *backend);
-//
-//extern int32_t qkrt_sampler_job_run(Job **out, Service *service, Backend *backend, QkCircuit *circuit, int32_t shots, char *runtime);
-//
-//extern int32_t qkrt_job_status(uint32_t *out, Service *service, Job *job);
-//
-//extern void qkrt_job_free(Job *job);
-//
-//extern void generate_qpy(QkCircuit *circuit, char *filename);
 
 int main(int argc, char *arv[]) {
     QkCircuit *qc = qk_circuit_new(100, 100);
