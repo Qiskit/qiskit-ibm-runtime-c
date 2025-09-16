@@ -525,8 +525,6 @@ pub async fn submit_sampler_job(
         runtime,
         tags,
     );
-    let file = File::create("/tmp/test.json").unwrap();
-    serde_json::to_writer_pretty(file, &job_payload).unwrap();
     let res = create_job(
         &service.quantum_config,
         crn,
@@ -543,6 +541,42 @@ pub async fn submit_sampler_job(
         response: res,
     })
 }
+
+pub async fn submit_estimator_job(
+    service: &Service,
+    backend: &Backend,
+    circuit: &crate::qiskit_circuit::Circuit,
+    shots: Option<i32>,
+    runtime: Option<String>,
+    tags: Option<Vec<String>>,
+) -> Result<Job, ServiceError> {
+    let crn = backend.instance.crn.to_str().unwrap();
+    let job_payload = crate::generate_job_params::create_estimator_job_payload(
+        circuit,
+        backend.response.name.clone(),
+        shots,
+        runtime,
+        tags,
+    );
+    let res = create_job(
+        &service.quantum_config,
+        crn,
+        Some("2025-06-01"),
+        None,
+        Some(CreateJobRequest::CreateJobRequestOneOf(Box::new(
+            job_payload,
+        ))),
+    )
+    .await?;
+    log_debug(&format!("submit_estimator_job response: {:?}", res));
+    Ok(Job {
+        instance: backend.instance.clone(),
+        response: res,
+    })
+}
+
+
+
 
 pub async fn get_job_details(service: &Service, job: &Job) -> Result<JobDetails, ServiceError> {
     let crn = job.instance.crn.to_str().unwrap();
