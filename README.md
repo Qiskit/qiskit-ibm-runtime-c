@@ -9,11 +9,11 @@ execution and retrieve primitive results. The goal here is to use Rust to build
 a safe API client for job submission and results processing for IBM's primitives
 but expose that to C.
 
-[!WARNING]
-This library is an early prototype and is still under active development.
-There are currently no backwards compatibility guarantees as the library
-is developed. This library also only supports a single Qiskit version at a
-time, currently only 2.2.0 is supported.
+> [!WARNING]
+> This library is an early prototype and is still under active development.
+> There are currently no backwards compatibility guarantees as the library
+> is developed. This library also only supports a single Qiskit version at a
+> time, currently only 2.2.0 is supported.
 
 
 ## Getting Started
