@@ -525,8 +525,6 @@ pub async fn submit_sampler_job(
         runtime,
         tags,
     );
-    let file = File::create("/tmp/test.json").unwrap();
-    serde_json::to_writer_pretty(file, &job_payload).unwrap();
     let res = create_job(
         &service.quantum_config,
         crn,
