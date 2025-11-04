@@ -45,7 +45,7 @@ macro_rules! check_result {
 ///
 /// It's C so it's never safe
 #[no_mangle]
-pub unsafe extern "C" fn generate_qpy(circuit: *mut QkCircuit, filename: *const c_char) {
+pub unsafe extern "C" fn generate_qpy(circuit: *const QkCircuit, filename: *const c_char) {
     let circuit = Circuit(circuit);
     let path = unsafe { Path::new(CStr::from_ptr(filename).to_str().unwrap()) };
     let mut file = File::create(path).unwrap();
@@ -60,7 +60,7 @@ pub unsafe extern "C" fn generate_qpy(circuit: *mut QkCircuit, filename: *const 
 /// It's C so it's never safe
 #[no_mangle]
 pub unsafe extern "C" fn qkrt_sampler_job_write_payload(
-    circuit: *mut QkCircuit,
+    circuit: *const QkCircuit,
     shots: i32,
     backend: *const c_char,
     runtime: *const c_char,
