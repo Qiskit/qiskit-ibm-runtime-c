@@ -464,11 +464,8 @@ pub async fn get_backend(service: &Service, backend: &Backend) -> crate::qiskit_
             crate::qiskit_target::ISAGate::I
         } else if gate == "cx" {
             crate::qiskit_target::ISAGate::CX
-        } else if gate == "rzz" {
-            // TODO: Add RZZ support when we have angle wrapping in
-            // Qiskit's target and C transpiler.
-            //            crate::qiskit_target::ISAGate::RZZ
-            continue;
+        }else if gate == "rzz" {
+            crate::qiskit_target::ISAGate::RZZ
         } else if gate == "reset" {
             target.add_reset(
                 props
