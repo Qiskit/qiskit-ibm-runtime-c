@@ -469,7 +469,7 @@ pub async fn get_backend(service: &Service, backend: &Backend) -> crate::qiskit_
             // Qiskit's target and C transpiler.
             //            crate::qiskit_target::ISAGate::RZZ
             log_warn(&concat!(
-                "rzz gate's constraints can be properly represented in the target ",
+                "rzz gate's constraints cannot be represented in the target from C ",
                 "currently. It is being excluded from the target generated for ",
                 "this backend."
             ));
