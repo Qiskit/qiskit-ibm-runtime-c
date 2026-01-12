@@ -468,6 +468,11 @@ pub async fn get_backend(service: &Service, backend: &Backend) -> crate::qiskit_
             // TODO: Add RZZ support when we have angle wrapping in
             // Qiskit's target and C transpiler.
             //            crate::qiskit_target::ISAGate::RZZ
+            log_warn(&concat!(
+                "rzz gate's constraints cannot be represented in the target from C ",
+                "currently. It is being excluded from the target generated for ",
+                "this backend."
+            ));
             continue;
         } else if gate == "reset" {
             target.add_reset(
@@ -477,7 +482,9 @@ pub async fn get_backend(service: &Service, backend: &Backend) -> crate::qiskit_
             );
             continue;
         } else {
-            panic!("What is a {gate}?");
+            log_warn(&format!(
+                "{gate} can not be represented in the Target for {name} because it does not correspond to a Qiskit standard operation. It will not be included in the target generated for this backend."));
+            continue;
         };
         target.add_gate(
             gate,
