@@ -93,7 +93,7 @@ extern QkTarget* qkrt_get_backend_target(Service *service , Backend *backend);
  *
  * @return The name of the backend.
  */
-extern char* qkrt_backend_name(Backend *backend);
+extern const char* qkrt_backend_name(Backend *backend);
 
 /**
  * Get the CRN of the instance associated with the provided backend.
@@ -102,7 +102,7 @@ extern char* qkrt_backend_name(Backend *backend);
  *
  * @return The instance CRN of the backend.
  */
-extern char* qkrt_backend_instance_crn(Backend *backend);
+extern const char* qkrt_backend_instance_crn(Backend *backend);
 
 /**
  * Get the name of the instance associated with the provided backend.
@@ -111,7 +111,7 @@ extern char* qkrt_backend_instance_crn(Backend *backend);
  *
  * @return The instance name of the backend.
  */
-extern char* qkrt_backend_instance_name(Backend *backend);
+extern const char* qkrt_backend_instance_name(Backend *backend);
 
 /**
  * Submit a new job given a circuit and the backend to run it on.
@@ -165,7 +165,7 @@ extern void generate_qpy(QkCircuit *circuit, char *filename);
  */
 extern int32_t qkrt_job_results(Samples **out, Service *service, Job *job);
 
-extern size_t qkrt_samples_num_samples(Samples *samples);
+extern size_t qkrt_samples_num_samples(const Samples *samples);
 
 /**
  * Get a specific sample by index.
@@ -173,7 +173,7 @@ extern size_t qkrt_samples_num_samples(Samples *samples);
  * @param samples The handle of the samples.
  * @param index The index of the sample to retrieve.
  */
-extern char* qkrt_samples_get_sample(Samples *samples, size_t index);
+extern char* qkrt_samples_get_sample(const Samples *samples, size_t index);
 
 /**
  * Free the provided samples.
