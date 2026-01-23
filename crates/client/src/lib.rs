@@ -15,6 +15,7 @@ mod generate_job_params;
 pub mod generate_qpy;
 mod pointers;
 pub mod qiskit_circuit;
+pub mod qiskit_observable;
 mod qiskit_ffi;
 pub mod qiskit_target;
 mod qpy_formats;
