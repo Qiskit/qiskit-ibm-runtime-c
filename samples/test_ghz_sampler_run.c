@@ -73,10 +73,17 @@ int main(int argc, char *arv[]) {
         printf("transpilation failed with: %s", error);
         goto cleanup_transpile;
     }
+    uint32_t num_qubits = qk_circuit_num_qubits(transpile_result.circuit);
+    QkObs *obs = qk_obs_identity(num_qubits);
+    QkBitTerm bit_terms[3] = {QkBitTerm_X, QkBitTerm_Y, QkBitTerm_Z};
+    uint32_t qubits[3] = {0, 1, 2};
+    QkComplex64 coeff = {1.0, 1.0};
+    QkObsTerm term = {coeff, 3, bit_terms, qubits, num_qubits};
+    qk_obs_add_term(obs, &term);
     // Run Job on backend 
     int32_t shots = 10000;
     Job *job;
-    res = qkrt_sampler_job_run(&job, service, backends[selected_backend], transpile_result.circuit, shots, NULL);
+    res = qkrt_estimator_job_run(&job, service, backends[selected_backend], transpile_result.circuit, obs, NULL);
     if (res != 0) {
         printf("job submit failed with code: %d\n", res);
         goto cleanup_search;
@@ -97,11 +104,10 @@ int main(int argc, char *arv[]) {
     Samples *samples;
     res = qkrt_sampler_job_results(&samples, service, job);
 
-    printf("Job has %d samples\nThe first sample is:\n", qkrt_samples_num_samples(samples));
-    char *first_sample = qkrt_samples_get_sample(samples, 0);
-    printf("%s\n", first_sample);
-    qkrt_str_free(first_sample);
-    qkrt_samples_free(samples);
+    printf("Job has %d evs\nThe first ev is:\n", qkrt_expectation_values_num_evs(evs));
+    double first_sample = qkrt_expectation_values_get_ev(evs, 0);
+    printf("%f\n", first_sample);
+    qkrt_expectation_values_free(evs);
 
     qkrt_job_free(job);
 
