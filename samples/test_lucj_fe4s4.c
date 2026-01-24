@@ -80,7 +80,7 @@ int main(int argc, char *arv[]) {
     do {
         printf("waiting 20 seconds to poll...\n");
         sleep(20);
-        res = qkrt_job_status(&status, service, job);
+        res = qkrt_sampler_job_status(&status, service, job);
         if (res != 0) {
             printf("status poll failed with code: %d\n", res);
             goto cleanup;
