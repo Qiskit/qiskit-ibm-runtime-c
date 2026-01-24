@@ -95,7 +95,7 @@ int main(int argc, char *arv[]) {
     } while (status == 0 || status == 1);
     printf("job terminated with status: %d\n", status);
     Samples *samples;
-    res = qkrt_job_results(&samples, service, job);
+    res = qkrt_sampler_job_results(&samples, service, job);
 
     printf("Job has %d samples\nThe first sample is:\n", qkrt_samples_num_samples(samples));
     char *first_sample = qkrt_samples_get_sample(samples, 0);
