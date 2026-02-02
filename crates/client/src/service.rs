@@ -564,7 +564,7 @@ pub async fn get_job_details(service: &Service, job: &Job) -> Result<JobDetails,
 }
 
 #[derive(Debug)]
-pub struct Samples(pub Vec<String>);
+pub struct Samples(pub Vec<String>, pub u32); //mod : samples -> samples ,bitstringlength
 
 pub async fn get_job_results(service: &Service, job: &Job) -> Result<Samples, ServiceError> {
     let crn = job.instance.crn.to_str().unwrap();
@@ -575,7 +575,8 @@ pub async fn get_job_results(service: &Service, job: &Job) -> Result<Samples, Se
         Some("2025-06-01"),
     )
     .await?;
-    log_debug(&format!("get_job_result response: {:?}", details));
+    log_debug(&format!("get_job_result response: {:?}", details)); 
+    let num_bits = details.results[0].data["meas"].num_bits; //mod : get num_bits from results
     let res = Ok(Samples(
         details
             .results
@@ -583,6 +584,7 @@ pub async fn get_job_results(service: &Service, job: &Job) -> Result<Samples, Se
             .flat_map(|x| x.data["meas"].samples.iter())
             .cloned()
             .collect(),
+            num_bits,  //mod : bitstringlength
     ));
     res
 }

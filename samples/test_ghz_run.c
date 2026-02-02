@@ -94,10 +94,22 @@ int main(int argc, char *arv[]) {
         printf("current status: %d\n", status);
     } while (status == 0 || status == 1);
     printf("job terminated with status: %d\n", status);
+    // Samples *samples;
+    // res = qkrt_job_results(&samples, service, job);
+
+    // printf("Job has %d samples\nThe first sample is:\n", qkrt_samples_num_samples(samples));
+    // char *first_sample = qkrt_samples_get_sample(samples, 0);
+    // printf("%s\n", first_sample);
+    // qkrt_str_free(first_sample);
+    // qkrt_samples_free(samples);
     Samples *samples;
     res = qkrt_job_results(&samples, service, job);
 
-    printf("Job has %d samples\nThe first sample is:\n", qkrt_samples_num_samples(samples));
+    uint32_t num_bits = qkrt_samples_num_bits(samples); 
+    size_t num_samples = qkrt_samples_num_samples(samples);
+    
+    printf("Job has %zu samples with %u bits each\n", num_samples, num_bits);
+    printf("The first sample is:\n");
     char *first_sample = qkrt_samples_get_sample(samples, 0);
     printf("%s\n", first_sample);
     qkrt_str_free(first_sample);

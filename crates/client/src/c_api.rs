@@ -295,6 +295,11 @@ pub unsafe extern "C" fn qkrt_samples_num_samples(samples: *const Samples) -> us
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn qkrt_samples_num_bits(samples: *const Samples) -> u32 {
+    unsafe { const_ptr_as_ref(samples) }.1
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn qkrt_samples_get_sample(
     samples: *const Samples,
     index: usize,
