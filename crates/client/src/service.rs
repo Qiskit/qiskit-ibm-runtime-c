@@ -19,7 +19,7 @@ use ibm_quantum_platform_api::apis::backends_api::{
     get_backend_configuration, get_backend_properties, list_backends,
 };
 use ibm_quantum_platform_api::apis::jobs_api::{
-    create_job, get_job_details_jid, get_sampler_job_results_jid, get_estimator_job_results_jid,
+    create_job, get_estimator_job_results_jid, get_job_details_jid, get_sampler_job_results_jid,
 };
 use ibm_quantum_platform_api::models::{
     BackendsResponseV2DevicesInner, CreateJob200Response, CreateJobRequest,
@@ -550,7 +550,6 @@ pub async fn submit_estimator_job(
     })
 }
 
-
 pub async fn submit_sampler_job(
     service: &Service,
     backend: &Backend,
@@ -601,7 +600,10 @@ pub async fn get_job_details(service: &Service, job: &Job) -> Result<JobDetails,
 #[derive(Debug)]
 pub struct Samples(pub Vec<String>);
 
-pub async fn get_sampler_job_results(service: &Service, job: &Job) -> Result<Samples, ServiceError> {
+pub async fn get_sampler_job_results(
+    service: &Service,
+    job: &Job,
+) -> Result<Samples, ServiceError> {
     let crn = job.instance.crn.to_str().unwrap();
     let details = get_sampler_job_results_jid(
         &service.quantum_config,
@@ -625,7 +627,10 @@ pub async fn get_sampler_job_results(service: &Service, job: &Job) -> Result<Sam
 #[derive(Debug)]
 pub struct ExpectationValues(pub Vec<f64>);
 
-pub async fn get_estimator_job_results(service: &Service, job: &Job,) -> Result<ExpectationValues, ServiceError> {
+pub async fn get_estimator_job_results(
+    service: &Service,
+    job: &Job,
+) -> Result<ExpectationValues, ServiceError> {
     let crn = job.instance.crn.to_str().unwrap();
     let details = get_estimator_job_results_jid(
         &service.quantum_config,
@@ -635,11 +640,9 @@ pub async fn get_estimator_job_results(service: &Service, job: &Job,) -> Result<
     )
     .await?;
     log_debug(&format!("get_job_result response: {:?}", details));
-    Ok(ExpectationValues(details
-        .results
-        .iter()
-        .map(|x| x.data["evs"])
-        .collect()))
+    Ok(ExpectationValues(
+        details.results.iter().map(|x| x.data["evs"]).collect(),
+    ))
 }
 
 pub async fn get_job_status(service: &Service, job: &Job) -> Result<JobStatus, ServiceError> {

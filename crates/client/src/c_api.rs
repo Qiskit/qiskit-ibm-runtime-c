@@ -14,8 +14,8 @@ use crate::generate_job_params::create_sampler_job_payload;
 use crate::generate_qpy::generate_qpy_payload;
 use crate::pointers::const_ptr_as_ref;
 use crate::qiskit_circuit::Circuit;
+use crate::qiskit_ffi::{QkCircuit, QkObs, QkTarget};
 use crate::qiskit_observable::SparseObservable;
-use crate::qiskit_ffi::{QkCircuit, QkTarget, QkObs};
 use crate::{log_err, ExitCode};
 use std::ffi::{c_char, CStr, CString};
 use std::fs::File;
@@ -23,9 +23,10 @@ use std::io::prelude::*;
 use std::path::Path;
 
 use crate::service::{
-    get_account_from_config, get_backend, get_backends, get_job_details, get_estimator_job_results, get_sampler_job_results,
-    get_job_status, list_instances, submit_sampler_job, Backend, BackendSearchResults, Job,
-    JobDetails, ExpectationValues, Samples, Service, ServiceError, submit_estimator_job,
+    get_account_from_config, get_backend, get_backends, get_estimator_job_results, get_job_details,
+    get_job_status, get_sampler_job_results, list_instances, submit_estimator_job,
+    submit_sampler_job, Backend, BackendSearchResults, ExpectationValues, Job, JobDetails, Samples,
+    Service, ServiceError,
 };
 
 macro_rules! check_result {

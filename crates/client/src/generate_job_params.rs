@@ -77,15 +77,14 @@ pub fn generate_single_estimator_pubs_payload(
         ibm_quantum_platform_api::models::EstimatorV2InputPubsInner::Circuit(ibm_quantum_platform_api::models::estimator_v2_input_pubs_inner::EstimatorV2InputCircuit::new(encoded_circuit)),
         ibm_quantum_platform_api::models::EstimatorV2InputPubsInner::Observable(observable.to_term_map()),
     ]
-
 }
 
-static RESILIENCE_LEVEL_MAP: [ibm_quantum_platform_api::models::estimator_v2_input::ResilienceLevel; 3] = [
+static RESILIENCE_LEVEL_MAP:
+    [ibm_quantum_platform_api::models::estimator_v2_input::ResilienceLevel; 3] = [
     ibm_quantum_platform_api::models::estimator_v2_input::ResilienceLevel::Variant0,
     ibm_quantum_platform_api::models::estimator_v2_input::ResilienceLevel::Variant1,
     ibm_quantum_platform_api::models::estimator_v2_input::ResilienceLevel::Variant2,
 ];
-
 
 pub fn create_estimator_job_payload(
     circuit: &qiskit_circuit::Circuit,
@@ -97,7 +96,7 @@ pub fn create_estimator_job_payload(
 ) -> ibm_quantum_platform_api::models::CreateJobRequestOneOf {
     let pubs = generate_single_estimator_pubs_payload(circuit, observable);
     let resilience_level = resilience_level.map(|x| {
-        if  x > 2 {
+        if x > 2 {
             panic!("Invalid resilience_level: {}", x);
         } else {
             RESILIENCE_LEVEL_MAP[x as usize]
