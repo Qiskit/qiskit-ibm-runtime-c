@@ -331,6 +331,55 @@ pub async fn get_account_from_config(
     })
 }
 
+pub(crate) struct AccountConfig {
+    pub(crate) base_path: Option<String>,
+    pub(crate) user_agent: Option<String>,
+    pub(crate) token: Option<String>,
+}
+
+pub async fn get_account(
+    config: AccountConfig,
+    filename: Option<&str>,
+    name: Option<&str>,
+) -> Result<Account, ServiceError> {
+    let file_config = get_account_config(filename, name);
+    let iam_config = Configuration {
+        base_path: config
+            .base_path
+            .unwrap_or("https://iam.cloud.ibm.com".to_owned()),
+        user_agent: Some(
+            config
+                .user_agent
+                .unwrap_or("qiskit-ibm-runtime-rs/0.0.1".to_owned()),
+        ),
+        client: reqwest::Client::new(),
+        basic_auth: None,
+        oauth_access_token: None,
+        bearer_access_token: None,
+        api_key: None,
+    };
+    let response = get_token_api_key(
+        &iam_config,
+        "urn:ibm:params:oauth:grant-type:apikey",
+        config
+            .token
+            .as_ref()
+            .map(|x| x.as_str())
+            .unwrap_or(file_config.token.as_str()),
+        None,
+    )
+    .await?;
+    log_debug(&format!(
+        "get_account_from_config response: {:?}",
+        &response
+    ));
+    Ok(Account {
+        config: file_config,
+        token: response,
+        iam_config,
+    })
+}
+
 pub async fn list_instances(account: &Account) -> Result<Vec<Instance>, ServiceError> {
     let mut config = SearchConfiguration::default();
     config.user_agent = Some("qiskit-ibm-runtime-rs/0.0.1".to_string());

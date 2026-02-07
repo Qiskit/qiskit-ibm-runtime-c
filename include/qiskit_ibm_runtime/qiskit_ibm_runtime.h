@@ -45,6 +45,55 @@ typedef struct Samples Samples;
 extern int32_t qkrt_service_new(Service **out);
 
 /**
+ * The configuration input to allocate a new service with custom options.
+ *
+ * All fields can be null pointers and if so the default value will be used.
+ * You can create a new ``QkrtServiceConfig`` instance with all null values using
+ * ``qkrt_default_service_config``.
+ */
+typedef struct {
+    // The token to use to authenticate against IBM cloud with. By default it will be read from the
+    // specified config file
+    const char *token;
+    // The base url to use for connecting to IBM cloud with. By default it will be "https://iam.cloud.ibm.com"
+    const char *url;
+    // The user agent to set for all requests made from the service. By default it will be: "qiskit-ibm-runtime-rs/0.0.1"
+    const char *user_agent;
+    // The filename to the json configuration to read from. By default it will use from "$HOME/.qiskit/qiskit-ibm.json".
+    const char *filename;
+    // The account name to use inside the specified json file. By default it will use either "default",
+    // "default-ibm-quantum-platform", "default-ibm-cloud" in that order.
+    const char *account_name;
+} QkrtServiceConfig;
+
+/**
+ * Create a new ``QkrtServiceConfig`` object with all null pointer values. This indicates the default
+ * should be used for all fields. It is typically used to quickly create a struct and set a few custom
+ * values. For example:
+ *
+ * ```c
+ * QkrtServiceConfig config = qkrt_default_service_config();
+ * config.user_agent = "CustomClient_0.2";
+ */
+extern QkrtServiceConfig qkrt_default_service_config();
+
+
+/**
+ * Allocate a new Qiskit IBM Runtime Client service instance using a custom configuration
+ *
+ * You must free the service with ``qkrt_service_free`` when you're done with it.
+ *
+ * @param config A pointer to the configuration struct to use for allocating the new service instance.
+ * @param[out] out A pointer to where the newly allocate service's handle will be written
+ *
+ * @return An exit code to indicate the status of the call.
+ *
+ * # Example
+ *
+ */
+extern int32_t qkrt_service_new_from_config(QkrtServiceConfig *config, Service **out);
+
+/**
  * Free a Qiskit IBM Runtime Client service instance.
  *
  * @param service A handle to the service to free.
