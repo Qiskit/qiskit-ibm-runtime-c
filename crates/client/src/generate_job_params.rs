@@ -116,7 +116,7 @@ pub fn create_estimator_job_payload(
             Box::new(estimator_input),
         ),
     );
-    let tmp = ibm_quantum_platform_api::models::CreateJobRequestOneOf {
+    ibm_quantum_platform_api::models::CreateJobRequestOneOf {
         program_id: "estimator".to_string(),
         backend,
         runtime,
@@ -127,7 +127,5 @@ pub fn create_estimator_job_payload(
         params: Some(params),
         private: None,
         version: 2,
-    };
-    println!("output: {:?}", serde_json::to_string(&tmp).unwrap());
-    tmp
+    }
 }
