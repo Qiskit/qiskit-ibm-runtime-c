@@ -104,7 +104,7 @@ pub unsafe extern "C" fn qkrt_service_new(out: *mut *mut Service) -> ExitCode {
             .filter(|x| &x.crn.to_str().unwrap() == &instance)
             .collect()
     }
-    *out = Box::into_raw(Box::new(Service::new(account, instances)));
+    *out = Box::into_raw(Box::new(Service::new(account, instances, None)));
     ExitCode::Success
 }
 
@@ -169,7 +169,7 @@ pub unsafe extern "C" fn qkrt_service_new_from_config(
     }
     let account_config = AccountConfig {
         base_path: url,
-        user_agent,
+        user_agent: user_agent.clone(),
         token,
     };
     *out = std::ptr::null_mut();
@@ -186,7 +186,7 @@ pub unsafe extern "C" fn qkrt_service_new_from_config(
             .filter(|x| &x.crn.to_str().unwrap() == &instance)
             .collect()
     }
-    *out = Box::into_raw(Box::new(Service::new(account, instances)));
+    *out = Box::into_raw(Box::new(Service::new(account, instances, user_agent)));
 
     ExitCode::Success
 }

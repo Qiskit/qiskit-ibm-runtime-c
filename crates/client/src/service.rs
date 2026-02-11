@@ -263,10 +263,11 @@ pub struct Service {
 }
 
 impl Service {
-    pub fn new(account: Account, instances: Vec<Instance>) -> Self {
+    pub fn new(account: Account, instances: Vec<Instance>, user_agent: Option<String>) -> Self {
         let mut quantum_config =
             ibm_quantum_platform_api::apis::configuration::Configuration::default();
-        quantum_config.user_agent = Some("qiskit-ibm-runtime-rs/0.0.1".to_string());
+        quantum_config.user_agent =
+            Some(user_agent.unwrap_or("qiskit-ibm-runtime-rs/0.0.1".to_string()));
         quantum_config.api_key = Some(ibm_quantum_platform_api::apis::configuration::ApiKey {
             key: account.get_access_token().unwrap().to_string(),
             prefix: Some("Bearer".to_string()),
