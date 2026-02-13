@@ -24,7 +24,7 @@ use std::path::Path;
 use crate::service::{
     get_account_from_config, get_backend, get_backends, get_job_details, get_job_results,
     get_job_status, list_instances, submit_sampler_job, Backend, BackendSearchResults, Job,
-    JobDetails, Samples, Service, ServiceError,
+    JobDetails, Samples, Service,
 };
 
 macro_rules! check_result {
@@ -99,10 +99,7 @@ pub unsafe extern "C" fn qkrt_service_new(out: *mut *mut Service) -> ExitCode {
     let mut instances = check_result!(rt.block_on(list_instances(&account)));
     if let Some(instance) = &account.config.instance {
         // Filter-out any instance that doesn't match the user's config.
-        instances = instances
-            .into_iter()
-            .filter(|x| &x.crn.to_str().unwrap() == &instance)
-            .collect()
+        instances.retain(|x| x.crn.to_str().unwrap() == instance)
     }
     *out = Box::into_raw(Box::new(Service::new(account, instances)));
     ExitCode::Success
