@@ -331,7 +331,7 @@ pub unsafe extern "C" fn qkrt_counts_histogram_get_count(
 #[no_mangle]
 pub unsafe extern "C" fn qkrt_counts_histogram_most_frequent(
     counts: *const CountsHistogram,
-) -> *const c_char {
+) -> *mut c_char {
     let counts = unsafe { const_ptr_as_ref(counts) };
     CString::new(counts.most_frequent().as_bytes())
         .unwrap()

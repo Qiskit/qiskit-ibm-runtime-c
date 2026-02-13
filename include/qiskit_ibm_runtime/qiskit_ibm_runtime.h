@@ -229,7 +229,12 @@ typedef struct {
     // The number of occurences of the sample string
     uint64_t count;
 } QkrtCount;
-
+typedef struct {
+    /// The sample string. This is a pointer to an owned copy and must be freed.
+    char *name;
+    /// The number of occurences of the sample string
+    uint64_t count;
+} QkrtCount;
 /**
  * Get the count from the counts histogram by index
  *
