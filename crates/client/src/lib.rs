@@ -13,6 +13,7 @@
 mod c_api;
 mod generate_job_params;
 pub mod generate_qpy;
+pub mod histogram;
 mod pointers;
 pub mod qiskit_circuit;
 mod qiskit_ffi;
