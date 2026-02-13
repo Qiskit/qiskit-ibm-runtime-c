@@ -33,7 +33,6 @@ use ibmcloud_iam_api::models::token_response::TokenResponse;
 use crate::{log_debug, log_warn, ExitCode};
 use ibm_quantum_platform_api::models;
 use ibm_quantum_platform_api::models::job_response::Status;
-use ibm_quantum_platform_api::models::SamplerV2Result;
 use std::collections::HashMap;
 use std::error;
 use std::ffi::{c_char, CString};
@@ -546,7 +545,7 @@ pub async fn get_backend(service: &Service, backend: &Backend) -> crate::qiskit_
     let measure_props = backend_properties["qubits"]
         .as_array()
         .unwrap()
-        .into_iter()
+        .iter()
         .enumerate()
         .map(|(idx, props)| {
             let mut error = None;
