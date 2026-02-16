@@ -206,7 +206,7 @@ unsafe extern "C" {
 }
 unsafe extern "C" {
     #[doc = " @ingroup QkCircuit\n Free a circuit instruction object\n\n @param inst The instruction to free\n\n # Safety\n Behavior is undefined if ``inst`` is not an object returned by ``qk_circuit_get_instruction``."]
-    pub fn qk_circuit_instruction_clear(inst: *const QkCircuitInstruction);
+    pub fn qk_circuit_instruction_clear(inst: *mut QkCircuitInstruction);
 }
 unsafe extern "C" {
     #[doc = " @ingroup QkCircuit\n Free a circuit op count list.\n\n @param op_counts The returned op count list from ``qk_circuit_count_ops``.\n\n # Safety\n\n Behavior is undefined if ``op_counts`` is not the object returned by ``qk_circuit_count_ops``."]
