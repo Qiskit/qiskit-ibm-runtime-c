@@ -61,10 +61,18 @@ impl CountsHistogram {
         self.0.len()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
     pub fn get_item(&self, index: usize) -> Option<(&str, u64)> {
         self.0
             .get_index(index)
             .map(|(sample, count)| (sample.as_str(), *count))
+    }
+
+    pub fn get(&self, item: &str) -> Option<u64> {
+        self.0.get(item).copied()
     }
 
     pub fn display(&self) {

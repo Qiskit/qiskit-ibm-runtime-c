@@ -355,6 +355,16 @@ pub unsafe extern "C" fn qkrt_counts_histogram_sort_by_frequency(
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn qkrt_counts_histogram_get_by_sample(
+    counts: *const CountsHistogram,
+    sample: *const c_char,
+) -> u64 {
+    let counts = unsafe { const_ptr_as_ref(counts) };
+    let sample_str = CStr::from_ptr(sample).to_str().unwrap();
+    counts.get(sample_str).unwrap_or(u64::MAX)
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn qkrt_counts_histogram_display(counts: *const CountsHistogram) {
     unsafe { const_ptr_as_ref(counts) }.display()
 }

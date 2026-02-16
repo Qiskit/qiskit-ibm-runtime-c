@@ -229,6 +229,18 @@ extern char *qkrt_counts_histogram_least_frequent(CountsHistogram *counts);
 extern void qkrt_counts_histogram_sort_by_frequency(CountsHistogram *counts, bool most_frequent_first);
 
 /**
+ * Look up a sample's count
+ *
+ * @param counts The counts object to sample
+ * @param sample The sample to look up the count for
+ * @returns the count of a particular sample in the count histogram. If the
+ *    sample is not present in histogram a value of 18446744073709551615 (the
+ *    max value for the integer type uint64_t) will be returned to indicate
+ *    it is not present.
+ */
+extern uint64_t qkrt_counts_histogram_get_by_sample(CountsHistogram *counts, char *sample);
+
+/**
  * A count entry from a CountsHistogram.
  */
 typedef struct {
