@@ -13,11 +13,11 @@
 use foldhash::fast::RandomState;
 use indexmap::IndexMap;
 
-pub struct CountsHistogram(IndexMap<String, u64, RandomState>);
+pub struct Counts(IndexMap<String, u64, RandomState>);
 
-impl CountsHistogram {
+impl Counts {
     pub fn from_samples(samples: &[String]) -> Self {
-        let mut out = CountsHistogram(IndexMap::with_capacity_and_hasher(
+        let mut out = Counts(IndexMap::with_capacity_and_hasher(
             samples.len(),
             RandomState::default(),
         ));

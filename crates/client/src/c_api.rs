@@ -27,7 +27,7 @@ use crate::service::{
     JobDetails, Samples, Service,
 };
 
-use crate::histogram::CountsHistogram;
+use crate::counts::Counts;
 
 macro_rules! check_result {
     ($expr:expr) => {
@@ -289,16 +289,16 @@ pub unsafe extern "C" fn qkrt_job_results(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn qkrt_samples_to_counts_histogram(
+pub unsafe extern "C" fn qkrt_samples_to_counts(
     samples: *const Samples,
-) -> *mut CountsHistogram {
+) -> *mut Counts {
     let samples = unsafe { const_ptr_as_ref(samples) };
-    let histogram = CountsHistogram::from_samples(&samples.0);
+    let histogram = Counts::from_samples(&samples.0);
     Box::into_raw(Box::new(histogram))
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn qkrt_counts_histogram_length(counts: *const CountsHistogram) -> usize {
+pub unsafe extern "C" fn qkrt_counts_length(counts: *const Counts) -> usize {
     let counts = unsafe { const_ptr_as_ref(counts) };
     counts.len()
 }
@@ -310,8 +310,8 @@ pub struct QkrtCount {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn qkrt_counts_histogram_get_count(
-    counts: *const CountsHistogram,
+pub unsafe extern "C" fn qkrt_counts_get_count(
+    counts: *const Counts,
     index: usize,
     out_count: *mut QkrtCount,
 ) -> ExitCode {
@@ -326,8 +326,8 @@ pub unsafe extern "C" fn qkrt_counts_histogram_get_count(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn qkrt_counts_histogram_most_frequent(
-    counts: *const CountsHistogram,
+pub unsafe extern "C" fn qkrt_counts_most_frequent(
+    counts: *const Counts,
 ) -> *mut c_char {
     let counts = unsafe { const_ptr_as_ref(counts) };
     CString::new(counts.most_frequent().as_bytes())
@@ -336,8 +336,8 @@ pub unsafe extern "C" fn qkrt_counts_histogram_most_frequent(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn qkrt_counts_histogram_least_frequent(
-    counts: *const CountsHistogram,
+pub unsafe extern "C" fn qkrt_counts_least_frequent(
+    counts: *const Counts,
 ) -> *const c_char {
     let counts = unsafe { const_ptr_as_ref(counts) };
     CString::new(counts.least_frequent().as_bytes())
@@ -346,8 +346,8 @@ pub unsafe extern "C" fn qkrt_counts_histogram_least_frequent(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn qkrt_counts_histogram_sort_by_frequency(
-    counts: *mut CountsHistogram,
+pub unsafe extern "C" fn qkrt_counts_sort_by_frequency(
+    counts: *mut Counts,
     most_frequent_first: bool,
 ) {
     let counts = unsafe { mut_ptr_as_ref(counts) };
@@ -355,8 +355,8 @@ pub unsafe extern "C" fn qkrt_counts_histogram_sort_by_frequency(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn qkrt_counts_histogram_get_by_sample(
-    counts: *const CountsHistogram,
+pub unsafe extern "C" fn qkrt_counts_get_by_sample(
+    counts: *const Counts,
     sample: *const c_char,
 ) -> u64 {
     let counts = unsafe { const_ptr_as_ref(counts) };
@@ -365,7 +365,7 @@ pub unsafe extern "C" fn qkrt_counts_histogram_get_by_sample(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn qkrt_counts_histogram_display(counts: *const CountsHistogram) {
+pub unsafe extern "C" fn qkrt_counts_display(counts: *const Counts) {
     unsafe { const_ptr_as_ref(counts) }.display()
 }
 
@@ -398,7 +398,7 @@ pub unsafe extern "C" fn qkrt_samples_free(samples: *mut Samples) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn qkrt_counts_histogram_free(counts: *mut CountsHistogram) {
+pub unsafe extern "C" fn qkrt_counts_free(counts: *mut Counts) {
     if !counts.is_null() {
         drop(Box::from_raw(counts))
     }
