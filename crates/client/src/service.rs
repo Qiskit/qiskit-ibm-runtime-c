@@ -363,8 +363,7 @@ pub async fn get_account(
         "urn:ibm:params:oauth:grant-type:apikey",
         config
             .token
-            .as_ref()
-            .map(|x| x.as_str())
+            .as_deref()
             .unwrap_or(file_config.token.as_str()),
         None,
     )
