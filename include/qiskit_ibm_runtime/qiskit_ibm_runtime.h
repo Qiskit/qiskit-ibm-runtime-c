@@ -204,11 +204,19 @@ extern void qkrt_counts_histogram_display(CountsHistogram *counts);
 
 /**
  * Return the most frequent sample from the counts object
+ *
+ * This function will panic if the counts histogram is empty. You should
+ * check that `qkrt_counts_histogram_length` is greater than 0 before calling
+ * this function.
  */
 extern char *qkrt_counts_histogram_most_frequent(CountsHistogram *counts);
 
 /**
  * Return the most frequent sample from the counts object
+ *
+ * This function will panic if the counts histogram is empty. You should
+ * check that `qkrt_counts_histogram_length` is greater than 0 before calling
+ * this function.
  */
 extern char *qkrt_counts_histogram_least_frequent(CountsHistogram *counts);
 

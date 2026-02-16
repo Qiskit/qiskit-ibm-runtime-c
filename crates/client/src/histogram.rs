@@ -36,7 +36,7 @@ impl CountsHistogram {
         self.0
             .iter()
             .max_by_key(|(_idx, val)| *val)
-            .unwrap()
+            .expect("There are no samples in the counts histogram.")
             .0
             .as_str()
     }
@@ -45,7 +45,7 @@ impl CountsHistogram {
         self.0
             .iter()
             .min_by_key(|(_idx, val)| *val)
-            .unwrap()
+            .expect("There are no samples in the counts histogram.")
             .0
             .as_str()
     }
