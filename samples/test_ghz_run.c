@@ -100,9 +100,13 @@ int main(int argc, char *arv[]) {
     printf("Job has %d samples\nThe first sample is:\n", qkrt_samples_num_samples(samples));
     char *first_sample = qkrt_samples_get_sample(samples, 0);
     printf("%s\n", first_sample);
+    Counts *counts = qkrt_samples_to_counts(samples);
+    qkrt_counts_sort_by_frequency(counts, true);
+    qkrt_counts_display(counts);
+
     qkrt_str_free(first_sample);
     qkrt_samples_free(samples);
-
+    qkrt_counts_free(counts);
     qkrt_job_free(job);
 
     cleanup_search:
