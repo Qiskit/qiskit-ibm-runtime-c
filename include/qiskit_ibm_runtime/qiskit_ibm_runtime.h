@@ -232,12 +232,6 @@ extern void qkrt_counts_histogram_sort_by_frequency(CountsHistogram *counts, boo
  * A count entry from a CountsHistogram.
  */
 typedef struct {
-    // The sample string. This is a pointer to an owned copy and must be freed.
-    char *name;
-    // The number of occurences of the sample string
-    uint64_t count;
-} QkrtCount;
-typedef struct {
     /// The sample string. This is a pointer to an owned copy and must be freed.
     char *name;
     /// The number of occurences of the sample string
