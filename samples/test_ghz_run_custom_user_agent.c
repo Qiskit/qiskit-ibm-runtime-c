@@ -18,7 +18,7 @@
 
 #include <qiskit_ibm_runtime/qiskit_ibm_runtime.h>
 
-int main(int argc, char *arv[]) {
+int main(int argc, char *argv[]) {
     // Build a 5 qubit GHZ state
     QkCircuit *qc = qk_circuit_new(5, 5);
     uint32_t h_qargs[1] = {0, };
@@ -62,7 +62,7 @@ int main(int argc, char *arv[]) {
     uint64_t selected_backend = 0;
     printf("\nenter the index of the backend to select: ");
     scanf("%llu", &selected_backend);
-    printf("selected backed: %llu", &selected_backend);
+    printf("selected backend: %llu", selected_backend);
 
     // Transpile circuit for backend
     QkTarget *target = qkrt_get_backend_target(service, backends[selected_backend]);
