@@ -83,7 +83,7 @@ int main(int argc, char *arv[]) {
     // Run Job on backend 
     int32_t shots = 10000;
     Job *job;
-    res = qkrt_estimator_job_run(&job, service, backends[selected_backend], transpile_result.circuit, obs, NULL);
+    res = qkrt_sampler_job_run(&job, service, backends[selected_backend], transpile_result.circuit, shots, NULL);
     if (res != 0) {
         printf("job submit failed with code: %d\n", res);
         goto cleanup_search;
@@ -104,10 +104,11 @@ int main(int argc, char *arv[]) {
     Samples *samples;
     res = qkrt_sampler_job_results(&samples, service, job);
 
-    printf("Job has %d evs\nThe first ev is:\n", qkrt_expectation_values_num_evs(evs));
-    double first_sample = qkrt_expectation_values_get_ev(evs, 0);
-    printf("%f\n", first_sample);
-    qkrt_expectation_values_free(evs);
+    printf("Job has %d samples\nThe first sample is:\n", qkrt_samples_num_samples(samples));
+    char *first_sample = qkrt_samples_get_sample(samples, 0);
+    printf("%s\n", first_sample);
+    qkrt_str_free(first_sample);
+    qkrt_samples_free(samples);
 
     qkrt_job_free(job);
 
