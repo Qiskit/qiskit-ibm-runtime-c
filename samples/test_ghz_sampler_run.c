@@ -73,13 +73,6 @@ int main(int argc, char *arv[]) {
         printf("transpilation failed with: %s", error);
         goto cleanup_transpile;
     }
-    uint32_t num_qubits = qk_circuit_num_qubits(transpile_result.circuit);
-    QkObs *obs = qk_obs_identity(num_qubits);
-    QkBitTerm bit_terms[3] = {QkBitTerm_X, QkBitTerm_Y, QkBitTerm_Z};
-    uint32_t qubits[3] = {0, 1, 2};
-    QkComplex64 coeff = {1.0, 1.0};
-    QkObsTerm term = {coeff, 3, bit_terms, qubits, num_qubits};
-    qk_obs_add_term(obs, &term);
     // Run Job on backend 
     int32_t shots = 10000;
     Job *job;
