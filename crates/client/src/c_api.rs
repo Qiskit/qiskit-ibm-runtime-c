@@ -337,9 +337,9 @@ pub unsafe extern "C" fn qkrt_estimator_job_results(
         .unwrap();
     let service = const_ptr_as_ref(service);
     let job = const_ptr_as_ref(job);
-    let samples = check_result!(rt.block_on(get_estimator_job_results(service, job,)));
-    let out_samples = Box::into_raw(Box::new(samples));
-    *out = out_samples;
+    let results = check_result!(rt.block_on(get_estimator_job_results(service, job,)));
+    let boxed_results_raw_ptr = Box::into_raw(Box::new(results));
+    *out = boxed_results_raw_ptr;
     ExitCode::Success
 }
 
