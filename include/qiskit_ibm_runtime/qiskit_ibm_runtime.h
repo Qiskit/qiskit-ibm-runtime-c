@@ -132,7 +132,7 @@ extern const char* qkrt_backend_instance_name(Backend *backend);
 extern int32_t qkrt_sampler_job_run(Job **out, Service *service, Backend *backend, QkCircuit *circuit, int32_t shots, char *runtime);
 
 /**
- * Submit a new job given a circuit, observable, and the backend to run it on.
+ * Submit a new estimator job given a circuit, observable, and the backend to run it on.
  *
  * You must free the allocated job instance with ``qkrt_job_free`` when you're done
  * with it.
@@ -184,7 +184,7 @@ extern void generate_qpy(QkCircuit *circuit, char *filename);
 extern int32_t qkrt_sampler_job_results(Samples **out, Service *service, Job *job);
 
 /**
- * Fetch the results of the provided job.
+ * Fetch the results of the provided estimator job.
  *
  * You must free the allocated samples with ``qkrt_samples_free`` when you are
  * done with them.
@@ -222,7 +222,7 @@ extern double qkrt_expectation_values_get_ev(ExpectationValues *evs, size_t inde
 extern void qkrt_samples_free(Samples *samples);
 
 /**
- * Free the provided samples.
+ * Free the provided array of expectation values.
  *
  * @param The handle of the expectation values to free.
  */
