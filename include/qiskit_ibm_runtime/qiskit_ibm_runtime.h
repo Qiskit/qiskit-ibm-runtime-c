@@ -169,7 +169,7 @@ extern void qkrt_job_free(Job *job);
 extern void generate_qpy(QkCircuit *circuit, char *filename);
 
 /**
- * Fetch the results of the provided job.
+ * Fetch the results of the provided sampler job.
  *
  * You must free the allocated samples with ``qkrt_samples_free`` when you are
  * done with them.
