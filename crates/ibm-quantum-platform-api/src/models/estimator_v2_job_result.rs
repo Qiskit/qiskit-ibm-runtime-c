@@ -5,11 +5,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
-pub struct EstimatorV2ResultEntryData {
-    pub evs: Vec<f64>,
-}
-
-#[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct EstimatorV2ResultEntry {
     pub data: HashMap<String, f64>,
     pub metadata: Value,
