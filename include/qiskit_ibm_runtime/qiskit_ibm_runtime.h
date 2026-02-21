@@ -17,6 +17,7 @@ typedef struct Job Job;
 typedef struct Backend Backend;
 typedef struct BackendSearchResults BackendSearchResults;
 typedef struct Samples Samples;
+typedef struct ExpectationValues ExpectationValues;
 
 /**
  * Allocate a new Qiskit IBM Runtime Client service instance.
@@ -131,6 +132,23 @@ extern const char* qkrt_backend_instance_name(Backend *backend);
 extern int32_t qkrt_sampler_job_run(Job **out, Service *service, Backend *backend, QkCircuit *circuit, int32_t shots, char *runtime);
 
 /**
+ * Submit a new estimator job given a circuit, observable, and the backend to run it on.
+ *
+ * You must free the allocated job instance with ``qkrt_job_free`` when you're done
+ * with it.
+ *
+ * @param[out] out A pointer to where the newly allocated job's handle will be written
+ * @param service A handle to the service.
+ * @param backend A handle to the backend.
+ * @param circuit A handle to the circuit to run.
+ * @param observable A handle to the observable to estimate
+ * @param runtime The name of the runtime.
+ *
+ * @return An exit code to indicate the status of the call.
+ */
+extern int32_t qkrt_estimator_job_run(Job **out, Service *service, Backend *backend, QkCircuit *circuit, QkObs *observable, char *runtime);
+
+/**
  * Check the status of the provided job.
  *
  * @param[out] out A pointer to where the resulting job status will be written.
@@ -151,7 +169,7 @@ extern void qkrt_job_free(Job *job);
 extern void generate_qpy(QkCircuit *circuit, char *filename);
 
 /**
- * Fetch the results of the provided job.
+ * Fetch the results of the provided sampler job.
  *
  * You must free the allocated samples with ``qkrt_samples_free`` when you are
  * done with them.
@@ -163,9 +181,26 @@ extern void generate_qpy(QkCircuit *circuit, char *filename);
  *
  * @return An exit code to indicate the status of the call.
  */
-extern int32_t qkrt_job_results(Samples **out, Service *service, Job *job);
+extern int32_t qkrt_sampler_job_results(Samples **out, Service *service, Job *job);
+
+/**
+ * Fetch the results of the provided estimator job.
+ *
+ * You must free the allocated samples with ``qkrt_samples_free`` when you are
+ * done with them.
+ *
+ * @param[out] out A pointer to where the newly allocated samples' handle will be
+ *     written.
+ * @param service The service handle.
+ * @param job The handle of the job to fetch the results of.
+ *
+ * @return An exit code to indicate the status of the call.
+ */
+extern int32_t qkrt_estimator_job_results(ExpectationValues **out, Service *service, Job *job);
 
 extern size_t qkrt_samples_num_samples(const Samples *samples);
+
+extern size_t qkrt_expectation_values_num_evs(ExpectationValues *evs);
 
 /**
  * Get a specific sample by index.
@@ -175,12 +210,23 @@ extern size_t qkrt_samples_num_samples(const Samples *samples);
  */
 extern char* qkrt_samples_get_sample(const Samples *samples, size_t index);
 
+
+extern double qkrt_expectation_values_get_ev(ExpectationValues *evs, size_t index);
+
+
 /**
  * Free the provided samples.
  *
  * @param The handle of the samples to free.
  */
 extern void qkrt_samples_free(Samples *samples);
+
+/**
+ * Free the provided array of expectation values.
+ *
+ * @param The handle of the expectation values to free.
+ */
+extern void qkrt_expectation_values_free(ExpectationValues *evs);
 
 /**
  * Free the provided string.
