@@ -104,9 +104,13 @@ add_executable(test_job_submit samples/test_job_submit.c)
 target_include_directories(test_job_submit PRIVATE ${PROJECT_INCLUDEDIR})
 target_link_libraries(test_job_submit PRIVATE qiskit qiskit_ibm_runtime)
 
-add_executable(test_ghz_run samples/test_ghz_run.c)
-target_include_directories(test_ghz_run PRIVATE ${PROJECT_INCLUDEDIR})
-target_link_libraries(test_ghz_run PRIVATE qiskit qiskit_ibm_runtime)
+add_executable(test_ghz_sampler_run samples/test_ghz_sampler_run.c)
+target_include_directories(test_ghz_sampler_run PRIVATE ${PROJECT_INCLUDEDIR})
+target_link_libraries(test_ghz_sampler_run PRIVATE qiskit qiskit_ibm_runtime)
+
+add_executable(test_ghz_estimator_run samples/test_ghz_estimator_run.c)
+target_include_directories(test_ghz_estimator_run PRIVATE ${PROJECT_INCLUDEDIR})
+target_link_libraries(test_ghz_estimator_run PRIVATE qiskit qiskit_ibm_runtime)
 
 add_executable(test_ghz_run_custom_user_agent samples/test_ghz_run_custom_user_agent.c)
 target_include_directories(test_ghz_run_custom_user_agent PRIVATE ${PROJECT_INCLUDEDIR})
