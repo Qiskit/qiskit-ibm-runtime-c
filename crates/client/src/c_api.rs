@@ -14,7 +14,8 @@ use crate::generate_job_params::create_sampler_job_payload;
 use crate::generate_qpy::generate_qpy_payload;
 use crate::pointers::{const_ptr_as_ref, mut_ptr_as_ref};
 use crate::qiskit_circuit::Circuit;
-use crate::qiskit_ffi::{QkCircuit, QkTarget};
+use crate::qiskit_ffi::{QkCircuit, QkObs, QkTarget};
+use crate::qiskit_observable::SparseObservable;
 use crate::{log_err, ExitCode};
 use std::ffi::{c_char, CStr, CString};
 use std::fs::File;
@@ -22,9 +23,10 @@ use std::io::prelude::*;
 use std::path::Path;
 
 use crate::service::{
-    get_account_from_config, get_backend, get_backends, get_job_details, get_job_results,
-    get_job_status, list_instances, submit_sampler_job, Backend, BackendSearchResults, Job,
-    JobDetails, Samples, Service,
+    get_account_from_config, get_backend, get_backends, get_estimator_job_results, get_job_details,
+    get_job_status, get_sampler_job_results, list_instances, submit_estimator_job,
+    submit_sampler_job, Backend, BackendSearchResults, ExpectationValues, Job, JobDetails, Samples,
+    Service,
 };
 
 use crate::counts::Counts;
@@ -241,6 +243,43 @@ pub unsafe extern "C" fn qkrt_sampler_job_run(
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn qkrt_estimator_job_run(
+    out: *mut *mut Job,
+    service: *const Service,
+    backend: *const Backend,
+    circuit: *mut QkCircuit,
+    observable: *mut QkObs,
+    runtime: *const c_char,
+) -> ExitCode {
+    if out.is_null() {
+        return ExitCode::NullPointerError;
+    }
+    *out = std::ptr::null_mut();
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+
+    let service = const_ptr_as_ref(service);
+    let backend = const_ptr_as_ref(backend);
+    let runtime = if runtime.is_null() {
+        None
+    } else {
+        unsafe { Some(CStr::from_ptr(runtime).to_str().unwrap().to_string()) }
+    };
+    let job = check_result!(rt.block_on(submit_estimator_job(
+        service,
+        backend,
+        &Circuit(circuit),
+        &SparseObservable(observable),
+        runtime,
+        None,
+    )));
+    *out = Box::into_raw(Box::new(job));
+    ExitCode::Success
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn qkrt_job_free(job: *mut Job) {
     if !job.is_null() {
         unsafe {
@@ -271,7 +310,7 @@ pub unsafe extern "C" fn qkrt_job_details(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn qkrt_job_results(
+pub unsafe extern "C" fn qkrt_sampler_job_results(
     out: *mut *mut Samples,
     service: *const Service,
     job: *const Job,
@@ -282,7 +321,7 @@ pub unsafe extern "C" fn qkrt_job_results(
         .unwrap();
     let service = const_ptr_as_ref(service);
     let job = const_ptr_as_ref(job);
-    let samples = check_result!(rt.block_on(get_job_results(service, job,)));
+    let samples = check_result!(rt.block_on(get_sampler_job_results(service, job,)));
     let out_samples = Box::into_raw(Box::new(samples));
     *out = out_samples;
     ExitCode::Success
@@ -320,6 +359,24 @@ pub unsafe extern "C" fn qkrt_counts_get_count(
     };
     out_count.name = CString::new(counts_tuple.0.as_bytes()).unwrap().into_raw();
     out_count.count = counts_tuple.1;
+    ExitCode::Success
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_estimator_job_results(
+    out: *mut *mut ExpectationValues,
+    service: *const Service,
+    job: *const Job,
+) -> ExitCode {
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+    let service = const_ptr_as_ref(service);
+    let job = const_ptr_as_ref(job);
+    let results = check_result!(rt.block_on(get_estimator_job_results(service, job,)));
+    let boxed_results_raw_ptr = Box::into_raw(Box::new(results));
+    *out = boxed_results_raw_ptr;
     ExitCode::Success
 }
 
@@ -369,6 +426,11 @@ pub unsafe extern "C" fn qkrt_samples_num_samples(samples: *const Samples) -> us
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn qkrt_expectation_values_num_evs(evs: *const ExpectationValues) -> usize {
+    unsafe { const_ptr_as_ref(evs) }.0.len()
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn qkrt_samples_get_sample(
     samples: *const Samples,
     index: usize,
@@ -377,6 +439,15 @@ pub unsafe extern "C" fn qkrt_samples_get_sample(
     let sample: &String = &samples.0[index];
     let c_string = CString::new(sample.as_bytes()).unwrap();
     c_string.into_raw()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_expectation_values_get_ev(
+    samples: *const ExpectationValues,
+    index: usize,
+) -> f64 {
+    let samples = unsafe { const_ptr_as_ref(samples) };
+    samples.0[index]
 }
 
 #[no_mangle]
@@ -395,6 +466,13 @@ pub unsafe extern "C" fn qkrt_samples_free(samples: *mut Samples) {
 pub unsafe extern "C" fn qkrt_counts_free(counts: *mut Counts) {
     if !counts.is_null() {
         drop(Box::from_raw(counts))
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_expectation_values_free(evs: *mut ExpectationValues) {
+    if !evs.is_null() {
+        drop(Box::from_raw(evs))
     }
 }
 
