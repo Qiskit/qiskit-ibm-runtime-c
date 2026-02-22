@@ -41,6 +41,19 @@ pub fn generate_qpy_payload(circuit: &qiskit_circuit::Circuit) -> BinResult<Vec<
     .write(&mut writer)?;
     qpy_formats::ProgramType { type_key: b'q' }.write(&mut writer)?;
     let empty_json = "{}";
+    let registers = if circuit.num_clbits() == 0 {
+        vec![qpy_formats::RegisterV4Pack {
+            register_type: b'c',
+            standalone: true as u8,
+            size: circuit.num_clbits(),
+            name_size: 4,
+            in_circuit: true as u8,
+            name: "meas".as_bytes().to_vec(),
+            bit_indices: (0..circuit.num_clbits()).map(|x| x as i64).collect(),
+        }]
+    } else {
+        vec![]
+    };
     let circuit_header = qpy_formats::CircuitHeaderV12Pack {
         name_size: 0,
         global_phase_type: b'f',
@@ -54,15 +67,7 @@ pub fn generate_qpy_payload(circuit: &qiskit_circuit::Circuit) -> BinResult<Vec<
         circuit_name: Vec::new(),
         global_phase_data: 0_f64.to_be_bytes().to_vec(),
         metadata: empty_json.as_bytes().to_vec(),
-        registers: vec![qpy_formats::RegisterV4Pack {
-            register_type: b'c',
-            standalone: true as u8,
-            size: circuit.num_clbits(),
-            name_size: 4,
-            in_circuit: true as u8,
-            name: "meas".as_bytes().to_vec(),
-            bit_indices: (0..circuit.num_clbits()).map(|x| x as i64).collect(),
-        }],
+        registers,
     };
     let instructions =
         circuit
