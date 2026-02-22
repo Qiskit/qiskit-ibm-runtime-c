@@ -12,7 +12,6 @@
 
 use crate::qiskit_ffi;
 use std::collections::HashMap;
-use std::ffi::CString;
 
 pub struct BitTerm(pub *mut qiskit_ffi::QkBitTerm);
 pub struct SparseObservable(pub *mut qiskit_ffi::QkObs);
@@ -32,7 +31,7 @@ impl SparseObservable {
         (0..num_terms as u64)
             .map(|i| unsafe {
                 qiskit_ffi::qk_obs_term(self.0, i, term.as_mut_ptr());
-                let mut label = vec!['I' as u8; self.num_qubits() as usize];
+                let mut label = vec![b'I'; self.num_qubits() as usize];
                 let term = &*term.as_ptr();
                 let bit_terms = std::slice::from_raw_parts(term.bit_terms, term.len);
                 let indices = std::slice::from_raw_parts(term.indices, term.len);

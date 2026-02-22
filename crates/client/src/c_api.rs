@@ -374,6 +374,19 @@ pub unsafe extern "C" fn qkrt_expectation_values_get_ev(
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn qkrt_expectation_values_copy_into(
+    evs: *const ExpectationValues,
+    out: *mut f64,
+) {
+    let evs = unsafe { const_ptr_as_ref(evs) };
+    let out_slice = unsafe { std::slice::from_raw_parts_mut(out, evs.0.len()) };
+    evs.0
+        .iter()
+        .zip(out_slice.iter_mut())
+        .for_each(|(src, dst)| *dst = *src);
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn qkrt_str_free(string: *mut c_char) {
     let _ = CString::from_raw(string);
 }
@@ -428,4 +441,17 @@ pub extern "C" fn get_access_token() {
     let account = rt.block_on(get_account_from_config(None, None)).unwrap();
     println!("run");
     println!("token: {:?}", account.get_access_token());
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_copy_evs() {
+        let evs = ExpectationValues(vec![1.0, 0.0, -1.5]);
+        let mut out: Vec<f64> = vec![0.0; 3];
+        unsafe { qkrt_expectation_values_copy_into(&evs, out.as_mut_ptr()) };
+        assert_eq!(out, evs.0);
+    }
 }
