@@ -52,6 +52,40 @@ To run all tests, you can run the following command from within the build tree,
 ctest
 ```
 
+#### Running Sampler Examples
+
+Before running the sampler examples, you must first create a config json file with  IBM Quantum account credentials at your home root directory `$HOME/.qiskit/qiskit-ibm.json`
+
+##### Configuration Parameters
+
+* `name`: Accepted examples `default-ibm-quantum-platform`, `defautt-ibm-cloud`, or `default`
+* `token`: Your IBM Quantum API token
+* `instance`: Quantum service instance CRN
+* `channel`: The channel of the IBM Quantum API
+* `url`: The url of the IBM Quantum API
+
+##### Example of qiskit-ibm.json file:
+
+Create the file `$HOME/.qiskit/qiskit-ibm.json` with the following structure:
+
+```json
+{
+  "default-ibm-quantum-platform": {
+    "token": "YOUR_IBM_QUANTUM_TOKEN",
+    "instance": "YOUR_INSTANCE_CRN",
+    "channel": "ibm_quantum",
+    "url": "https://auth.quantum-computing.ibm.com/api"
+  }
+}
+```
+
+More details how to set your account can be found [here](https://github.com/Qiskit/qiskit-ibm-runtime?tab=readme-ov-file#save-your-account-on-disk)
+
+##### Running the Examples
+
+After configuring your account, execute the sampler examples as `./test_ghz_sampler_run`
+
+
 #### License
 
 This software is licensed under the Apache 2.0 license.
