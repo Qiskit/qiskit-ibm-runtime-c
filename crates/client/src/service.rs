@@ -231,28 +231,210 @@ impl<T: Debug> From<ibmcloud_iam_api::apis::Error<T>> for ServiceError {
     }
 }
 
-fn get_account_config(filename: Option<&str>, name: Option<&str>) -> AccountEntry {
+
+fn get_account_config(filename: Option<&str>, name: Option<&str>) -> Result<AccountEntry, ConfigError> {
+    if let Ok(token) = std::env::var("QISKIT_IBM_TOKEN") {
+
+        let instance = std::env::var("QISKIT_IBM_INSTANCE")
+            .map_err(|_| ConfigError::MissingRequiredEnvVar {
+                var_name: "QISKIT_IBM_INSTANCE".to_string(),
+        })?;
+
+        return Ok(AccountEntry {
+            token,
+            instance: Some(instance),
+            channel: std::env::var("QISKIT_IBM_CHANNEL").unwrap_or_else(|_| "ibm-quantum".to_string()),
+            url: std::env::var("QISKIT_IBM_URL").unwrap_or_else(|_| "https://auth.quantum-computing.ibm.com/api".to_string()),
+            verify: true,
+            private_endpoint: false,
+            proxies: None,
+        });
+    }
+
     let filename = match filename {
         Some(path) => path.to_string(),
         None => {
-            let home = std::env::var("HOME").unwrap();
+            let home = std::env::var("HOME").map_err(|_| ConfigError::HomeDirectoryNotFound)?;
             format!("{}/.qiskit/qiskit-ibm.json", home)
         }
     };
+
     let file_path = Path::new(&filename);
 
-    let file = File::open(file_path).unwrap();
+    let file = File::open(file_path).map_err(|e| ConfigError::FileNotFound {
+        path: filename.clone(),
+        error: e.to_string(), 
+    })?;
+
     let reader = BufReader::new(file);
-    let accounts: HashMap<String, AccountEntry> = serde_json::from_reader(reader).unwrap();
+    let accounts: HashMap<String, AccountEntry> = serde_json::from_reader(reader)
+     .map_err(|e| ConfigError::InvalidJson {
+        path: filename.clone(),
+        error: e.to_string(),
+    })?;
+
     match name {
-        Some(name) => accounts[name].clone(),
-        None => accounts
+        Some(name) => { accounts.get(name)
+            .cloned()
+            .ok_or_else(|| ConfigError::AccountNotFound {
+                name: name.to_string(),
+                available: accounts.keys().cloned().collect(),
+            })
+        }
+        None => { accounts
             .get("default")
             .or_else(|| accounts.get("default-ibm-quantum-platform"))
-            .unwrap_or_else(|| &accounts["default-ibm-cloud"])
-            .clone(),
+            .or_else(|| accounts.get("default-ibm-cloud"))
+            .cloned()
+            .ok_or((|| ConfigError::NoDefaultAccount {
+                available: accounts.keys().cloned().collect(),
+            })())
+        }    
     }
 }
+
+
+#[derive(Debug)]
+pub enum ConfigError {
+    HomeDirectoryNotFound,
+    FileNotFound { path: String, error: String },
+    InvalidJson { path: String, error: String },
+    AccountNotFound { name: String, available: Vec<String> },
+    NoDefaultAccount { available: Vec<String> },
+    MissingCredentials,
+    MissingRequiredEnvVar { var_name: String }, 
+}
+
+
+impl std::fmt::Display for ConfigError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            ConfigError::HomeDirectoryNotFound => {
+                write!(f, "[CONFIG ERROR] Could not determine home directory.\n\
+                    \nTroubleshooting:\n\
+                    - Ensure HOME environment variable is set\n\
+                    - Or use QISKIT_IBM_TOKEN environment variable instead")
+            }
+            ConfigError::FileNotFound { path, error } => {
+                write!(f, "[CONFIG ERROR] Configuration file not found\n\
+                    \nFile: {}\n\
+                    Error: {}\n\
+                    \nSolutions:\n\
+                    1. Set environment variables:\n\
+                       export QISKIT_IBM_TOKEN=\"your_token\"\n\
+                       export QISKIT_IBM_INSTANCE=\"your_instance\"\n\
+                    2. Create config file at: ~/.qiskit/qiskit-ibm.json\n\
+                       See: https://github.com/Qiskit/qiskit-ibm-runtime#configuration",
+                    path, error)
+            }
+            ConfigError::InvalidJson { path, error } => {
+                write!(f, "[CONFIG ERROR] Invalid JSON in configuration file\n\
+                    \nFile: {}\n\
+                    Parse error: {}\n\
+                    \nPlease check your JSON syntax at: {}",
+                    path, error, path)
+            }
+            ConfigError::AccountNotFound { name, available } => {
+                write!(f, "[CONFIG ERROR] Account '{}' not found in configuration\n\
+                    \nAvailable accounts: {:?}\n\
+                    \nPlease use one of the available account names or add '{}' to your config file.",
+                    name, available, name)
+            }
+            ConfigError::NoDefaultAccount { available } => {
+                write!(f, "[CONFIG ERROR] No default account found in configuration\n\
+                    \nAvailable accounts: {:?}\n\
+                    \nExpected one of:\n\
+                    - 'default'\n\
+                    - 'default-ibm-quantum-platform'\n\
+                    - 'default-ibm-cloud'\n\
+                    \nPlease rename one of your accounts to a default name.",
+                    available)
+            }
+            ConfigError::MissingCredentials => {
+                write!(f, "[CONFIG ERROR] No credentials found\n\
+                    \nPlease provide credentials using either:\n\
+                    1. Environment variables:\n\
+                       export QISKIT_IBM_TOKEN=\"your_token\"\n\
+                       export QISKIT_IBM_INSTANCE=\"your_instance\"\n\
+                    2. Configuration file at ~/.qiskit/qiskit-ibm.json")
+            }
+            ConfigError::MissingRequiredEnvVar { var_name } => {
+                write!(f, "[CONFIG ERROR] Missing required environment variable: {}\n\
+                    \nWhen using QISKIT_IBM_TOKEN, you must also set:\n\
+                    export {}=\"your_value\"\n\
+                    \nAlternatively, use a configuration file at ~/.qiskit/qiskit-ibm.json",
+                    var_name, var_name)
+            }
+        }
+    }
+}
+
+
+impl From<ConfigError> for ServiceError {
+    fn from(value: ConfigError) -> Self {
+        match value {
+            ConfigError::HomeDirectoryNotFound => ServiceError {
+                code: ExitCode::ConfigHomeDirectoryNotFound,
+                message: "Could not determine home directory.\n\
+                    \nTroubleshooting:\n\
+                    - Ensure HOME environment variable is set\n\
+                    - Or use QISKIT_IBM_TOKEN environment variable instead".to_string(),
+            },
+            ConfigError::FileNotFound { path, error } => ServiceError {
+                code: ExitCode::ConfigFileNotFound,
+                message: format!(
+                    "Configuration file not found at '{}': {}\n\
+                    \nPlease either:\n\
+                    1. Set environment variables: QISKIT_IBM_TOKEN, QISKIT_IBM_INSTANCE\n\
+                    2. Create config file at: ~/.qiskit/qiskit-ibm.json",
+                    path, error
+                ),
+            },
+            ConfigError::InvalidJson { path, error } => ServiceError {
+                code: ExitCode::ConfigInvalidJson,
+                message: format!(
+                    "Invalid JSON in config file '{}':\n{}\n\
+                    \nPlease check your JSON syntax.",
+                    path, error
+                ),
+            },
+            ConfigError::AccountNotFound { name, available } => ServiceError {
+                code: ExitCode::ConfigAccountNotFound,
+                message: format!(
+                    "Account '{}' not found in configuration.\n\
+                    \nAvailable accounts: {:?}\n\
+                    \nPlease use one of the available account names.",
+                    name, available
+                ),
+            },
+            ConfigError::NoDefaultAccount { available } => ServiceError {
+                code: ExitCode::ConfigNoDefaultAccount,
+                message: format!(
+                    "No default account found in configuration.\n\
+                    \nAvailable accounts: {:?}\n\
+                    \nExpected one of: 'default', 'default-ibm-quantum-platform', 'default-ibm-cloud'",
+                    available
+                ),
+            },
+            ConfigError::MissingCredentials => ServiceError {
+                code: ExitCode::ConfigMissingCredentials,
+                message: "No credentials found.\n\
+                    \nPlease set QISKIT_IBM_TOKEN environment variable or create ~/.qiskit/qiskit-ibm.json".to_string(),
+            },
+            ConfigError::MissingRequiredEnvVar { var_name } => ServiceError {
+                code: ExitCode::ConfigMissingCredentials,
+                message: format!(
+                    "Missing required environment variable: {}\n\
+                    \nWhen using QISKIT_IBM_TOKEN, you must also set:\n\
+                    export {}=\"your_value\"\n\
+                    \nAlternatively, use a configuration file at ~/.qiskit/qiskit-ibm.json",
+                    var_name, var_name
+                ),
+            },
+        }
+    }
+}
+
 
 #[derive(Clone, Debug)]
 pub struct Service {
@@ -302,7 +484,8 @@ pub async fn get_account_from_config(
     filename: Option<&str>,
     name: Option<&str>,
 ) -> Result<Account, ServiceError> {
-    let config = get_account_config(filename, name);
+    let config = get_account_config(filename, name)?;
+
     let iam_config = Configuration {
         base_path: "https://iam.cloud.ibm.com".to_owned(),
         user_agent: Some("qiskit-ibm-runtime-rs/0.0.1".to_owned()),

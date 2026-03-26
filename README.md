@@ -54,19 +54,24 @@ ctest
 
 #### Running Sampler Examples
 
-Before running the sampler examples, you must first create a config json file with  IBM Quantum account credentials at your home root directory `$HOME/.qiskit/qiskit-ibm.json`
+Before running the sampler examples, you must first set your account credentials.
+* `token`: Your IBM Quantum account token
+* `instance`: Your IBM Quantum account instance
+* `channel`: Your IBM Quantum account channel (optional)
 
-##### Configuration Parameters
+##### Configuration Methods (in priority order)
 
-* `name`: Accepted examples `default-ibm-quantum-platform`, `defautt-ibm-cloud`, or `default`
-* `token`: Your IBM Quantum API token
-* `instance`: Quantum service instance CRN
-* `channel`: The channel of the IBM Quantum API
-* `url`: The url of the IBM Quantum API
+1. **Environment Variables** (recommended)
+   ```bash
+   export QISKIT_IBM_TOKEN="your_token"
+   export QISKIT_IBM_INSTANCE="your_instance"
+   export QISKIT_IBM_CHANNEL="ibm_quantum"  # optional
 
-##### Example of qiskit-ibm.json file:
+2. **Configuration File for local development**
 
-Create the file `$HOME/.qiskit/qiskit-ibm.json` with the following structure:
+Configuration File to be Created at `$HOME/.qiskit/qiskit-ibm.json` with IBM Quantum account credentials and the desired channel, at your home root directory.
+
+Example of qiskit-ibm.json file:
 
 ```json
 {
@@ -74,7 +79,6 @@ Create the file `$HOME/.qiskit/qiskit-ibm.json` with the following structure:
     "token": "YOUR_IBM_QUANTUM_TOKEN",
     "instance": "YOUR_INSTANCE_CRN",
     "channel": "ibm_quantum",
-    "url": "https://auth.quantum-computing.ibm.com/api"
   }
 }
 ```

@@ -129,6 +129,11 @@ target_include_directories(test_qpy PRIVATE ${PROJECT_INCLUDEDIR})
 target_link_libraries(test_qpy PRIVATE qiskit qiskit_ibm_runtime)
 add_test(NAME qpy COMMAND test_qpy)
 
+add_executable(test_error_handling_run samples/test_error_handling_run.c)
+target_include_directories(test_error_handling_run PRIVATE ${PROJECT_INCLUDEDIR})
+target_link_libraries(test_error_handling_run PRIVATE qiskit qiskit_ibm_runtime)
+add_test(NAME error_handling COMMAND test_error_handling_run)
+
 # ---- Notes -------------------------------------------------------------------
 message(STATUS "CMake build type: ${CMAKE_BUILD_TYPE}")
 message(STATUS "Cargo profile: ${CARGO_PROFILE}")

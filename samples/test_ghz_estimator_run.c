@@ -18,6 +18,16 @@
 
 #include <qiskit_ibm_runtime/qiskit_ibm_runtime.h>
 
+extern const char* qkrt_get_last_error(void);
+
+void print_error_with_details(const char* context, int code) {
+    fprintf(stderr, "\n%s failed with code: %d\n", context, code);
+    const char* error_msg = qkrt_get_last_error();
+    if (error_msg != NULL && error_msg[0] != '\0') {
+        fprintf(stderr, "Details: %s\n", error_msg);
+    }
+}
+
 int main(int argc, char *arv[]) {
     // Build a 5 qubit GHZ state
     QkCircuit *qc = qk_circuit_new(5, 5);
@@ -37,14 +47,16 @@ int main(int argc, char *arv[]) {
     Service *service;
     res = qkrt_service_new(&service);
     if (res != 0) {
-        printf("service new failed with code: %d\n", res);
+        //printf("service new failed with code: %d\n", res);
+        print_error_with_details("service new", res);
         goto cleanup;
     }
 
     BackendSearchResults *results;
     res = qkrt_backend_search(&results, service);
     if (res != 0) {
-        printf("backend search failed with code: %d\n", res);
+        //printf("backend search failed with code: %d\n", res);
+        print_error_with_details("backend search", res);
         goto cleanup_service;
     }
     uint64_t result_count = qkrt_backend_search_results_length(results);
@@ -85,7 +97,8 @@ int main(int argc, char *arv[]) {
     Job *job;
     res = qkrt_estimator_job_run(&job, service, backends[selected_backend], transpile_result.circuit, obs, NULL);
     if (res != 0) {
-        printf("job submit failed with code: %d\n", res);
+        //printf("job submit failed with code: %d\n", res);
+        print_error_with_details("job submit", res);
         goto cleanup_search;
     }
     printf("job submit successful!\n");
@@ -95,7 +108,8 @@ int main(int argc, char *arv[]) {
         sleep(20);
         res = qkrt_job_status(&status, service, job);
         if (res != 0) {
-            printf("status poll failed with code: %d\n", res);
+            //printf("status poll failed with code: %d\n", res);
+            print_error_with_details("status poll", res);
             goto cleanup;
         }
         printf("current status: %d\n", status);

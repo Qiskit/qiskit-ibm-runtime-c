@@ -21,6 +21,7 @@ use std::ffi::{c_char, CStr, CString};
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::Path;
+use std::cell::RefCell;
 
 use crate::service::{
     get_account_from_config, get_backend, get_backends, get_estimator_job_results, get_job_details,
@@ -29,16 +30,38 @@ use crate::service::{
     Service,
 };
 
+thread_local! {
+    static LAST_ERROR: RefCell<Option<CString>> = RefCell::new(None);
+}
+
+pub(crate) fn set_last_error(message: String) {
+    LAST_ERROR.with(|e| {
+        *e.borrow_mut() = CString::new(message).ok();
+    });
+}
+
 macro_rules! check_result {
     ($expr:expr) => {
         match $expr {
             Ok(val) => val,
             Err(e) => {
-                log_err(&format!("{:?}", &e));
+                let error_msg = format!("{}", &e);
+                log_err(&format!("{}", &e));
+                crate::c_api::set_last_error(error_msg); 
                 return e.code();
             }
         }
     };
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_get_last_error() -> *const c_char {
+    LAST_ERROR.with(|e| {
+        e.borrow()
+            .as_ref()
+            .map(|s| s.as_ptr())
+            .unwrap_or(std::ptr::null())
+    })
 }
 
 /// This function only generates ISA static circuit QPY with no parameters
