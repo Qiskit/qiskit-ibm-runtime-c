@@ -47,7 +47,6 @@ int main(int argc, char *arv[]) {
     Service *service;
     res = qkrt_service_new(&service);
     if (res != 0) {
-        //printf("service new failed with code: %d\n", res);
         print_error_with_details("service new", res);
         goto cleanup;
     }
@@ -55,7 +54,6 @@ int main(int argc, char *arv[]) {
     BackendSearchResults *results;
     res = qkrt_backend_search(&results, service);
     if (res != 0) {
-        //printf("backend search failed with code: %d\n", res);
         print_error_with_details("backend search", res);
         goto cleanup_service;
     }
@@ -97,7 +95,6 @@ int main(int argc, char *arv[]) {
     Job *job;
     res = qkrt_estimator_job_run(&job, service, backends[selected_backend], transpile_result.circuit, obs, NULL);
     if (res != 0) {
-        //printf("job submit failed with code: %d\n", res);
         print_error_with_details("job submit", res);
         goto cleanup_search;
     }
@@ -108,7 +105,6 @@ int main(int argc, char *arv[]) {
         sleep(20);
         res = qkrt_job_status(&status, service, job);
         if (res != 0) {
-            //printf("status poll failed with code: %d\n", res);
             print_error_with_details("status poll", res);
             goto cleanup;
         }

@@ -79,19 +79,19 @@ pub enum ExitCode {
     IAMAPIConflict = 305,
     
     /// Configuration error (missing or invalid credentials/config file).
-    ConfigurationError = 400,
+    ConfigurationError = 601,
     /// Configuration error - home directory not found.
-    ConfigHomeDirectoryNotFound = 401,
+    ConfigHomeDirectoryNotFound = 602,
     /// Configuration error - config file not found.
-    ConfigFileNotFound = 402,
+    ConfigFileNotFound = 603,
     /// Configuration error - invalid JSON in config file.
-    ConfigInvalidJson = 403,
+    ConfigInvalidJson = 604,
     /// Configuration error - specified account not found.
-    ConfigAccountNotFound = 404,
+    ConfigAccountNotFound = 605,
     /// Configuration error - no default account configured.
-    ConfigNoDefaultAccount = 405,
+    ConfigNoDefaultAccount = 606,
     /// Configuration error - missing credentials.
-    ConfigMissingCredentials = 406,
+    ConfigMissingCredentials = 607,
 }
 
 fn log_err(e: &impl AsRef<str>) {
