@@ -15,6 +15,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <inttypes.h> 
 
 #include <qiskit_ibm_runtime/qiskit_ibm_runtime.h>
 
@@ -29,8 +30,6 @@
  * 2. Missing QISKIT_IBM_INSTANCE when QISKIT_IBM_TOKEN is set
  * 3. Invalid config file
  */
-
-extern const char* qkrt_get_last_error(void);
 
 void print_error(const char* context, int code) {
     fprintf(stderr, "\n=== Error in %s ===\n", context);
@@ -96,15 +95,15 @@ int main(int argc, char *argv[]) {
     }
     
     uint64_t result_count = qkrt_backend_search_results_length(results);
-    printf("✓ Found %llu backend(s)\n\n", result_count);
+    printf("✓ Found %" PRIu64 " backend(s)\n\n", result_count);
     
     if (result_count > 0) {
         Backend **backends = qkrt_backend_search_results_data(results);
         printf("Available backends:\n");
         for (uint64_t i = 0; i < result_count; i++) {
-            printf("  [%llu] %s\n", i, qkrt_backend_name(backends[i]));
+            printf("  [%" PRIu64 "] %s\n", i, qkrt_backend_name(backends[i]));
         }
-    }
+    }    
     
     qkrt_backend_search_results_free(results);
     qkrt_service_free(service);

@@ -18,8 +18,6 @@
 
 #include <qiskit_ibm_runtime/qiskit_ibm_runtime.h>
 
-extern const char* qkrt_get_last_error(void);
-
 void print_error_with_details(const char* context, int code) {
     fprintf(stderr, "\n%s failed with code: %d\n", context, code);
     const char* error_msg = qkrt_get_last_error();

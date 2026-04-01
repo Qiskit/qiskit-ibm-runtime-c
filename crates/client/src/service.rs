@@ -236,9 +236,9 @@ fn get_account_config(filename: Option<&str>, name: Option<&str>) -> Result<Acco
     if let Ok(token) = std::env::var("QISKIT_IBM_TOKEN") {
 
         let instance = std::env::var("QISKIT_IBM_INSTANCE")
-            .map_err(|_| ConfigError::MissingRequiredEnvVar {
-                var_name: "QISKIT_IBM_INSTANCE".to_string(),
-        })?;
+            .map_err(|_| ConfigError::MissingCredentials)?; //{
+                //var_name: "QISKIT_IBM_INSTANCE".to_string(),
+        //})?;
 
         return Ok(AccountEntry {
             token,
@@ -286,9 +286,9 @@ fn get_account_config(filename: Option<&str>, name: Option<&str>) -> Result<Acco
             .or_else(|| accounts.get("default-ibm-quantum-platform"))
             .or_else(|| accounts.get("default-ibm-cloud"))
             .cloned()
-            .ok_or((|| ConfigError::NoDefaultAccount {
+            .ok_or_else(|| ConfigError::NoDefaultAccount {
                 available: accounts.keys().cloned().collect(),
-            })())
+            })
         }    
     }
 }
@@ -296,13 +296,12 @@ fn get_account_config(filename: Option<&str>, name: Option<&str>) -> Result<Acco
 
 #[derive(Debug)]
 pub enum ConfigError {
+    MissingCredentials,
     HomeDirectoryNotFound,
     FileNotFound { path: String, error: String },
     InvalidJson { path: String, error: String },
     AccountNotFound { name: String, available: Vec<String> },
     NoDefaultAccount { available: Vec<String> },
-    MissingCredentials,
-    MissingRequiredEnvVar { var_name: String }, 
 }
 
 
@@ -357,13 +356,6 @@ impl std::fmt::Display for ConfigError {
                        export QISKIT_IBM_TOKEN=\"your_token\"\n\
                        export QISKIT_IBM_INSTANCE=\"your_instance\"\n\
                     2. Configuration file at ~/.qiskit/qiskit-ibm.json")
-            }
-            ConfigError::MissingRequiredEnvVar { var_name } => {
-                write!(f, "[CONFIG ERROR] Missing required environment variable: {}\n\
-                    \nWhen using QISKIT_IBM_TOKEN, you must also set:\n\
-                    export {}=\"your_value\"\n\
-                    \nAlternatively, use a configuration file at ~/.qiskit/qiskit-ibm.json",
-                    var_name, var_name)
             }
         }
     }
@@ -420,16 +412,6 @@ impl From<ConfigError> for ServiceError {
                 code: ExitCode::ConfigMissingCredentials,
                 message: "No credentials found.\n\
                     \nPlease set QISKIT_IBM_TOKEN environment variable or create ~/.qiskit/qiskit-ibm.json".to_string(),
-            },
-            ConfigError::MissingRequiredEnvVar { var_name } => ServiceError {
-                code: ExitCode::ConfigMissingCredentials,
-                message: format!(
-                    "Missing required environment variable: {}\n\
-                    \nWhen using QISKIT_IBM_TOKEN, you must also set:\n\
-                    export {}=\"your_value\"\n\
-                    \nAlternatively, use a configuration file at ~/.qiskit/qiskit-ibm.json",
-                    var_name, var_name
-                ),
             },
         }
     }

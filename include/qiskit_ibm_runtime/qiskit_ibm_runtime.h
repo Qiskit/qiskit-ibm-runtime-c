@@ -241,4 +241,4 @@ extern void qkrt_str_free(char *string);
  * @return Pointer to null-terminated error message string, or NULL if no error.
  *         The pointer is valid until the next error occurs or the thread exits.
  */
-const char* qkrt_get_last_error(void);
+ extern const char* qkrt_get_last_error(void);

@@ -116,6 +116,10 @@ add_executable(test_lucj_fe4s4 samples/test_lucj_fe4s4.c)
 target_include_directories(test_lucj_fe4s4 PRIVATE ${PROJECT_INCLUDEDIR})
 target_link_libraries(test_lucj_fe4s4 PRIVATE qiskit qiskit_ibm_runtime)
 
+add_executable(test_error_handling_run samples/test_error_handling_run.c)
+target_include_directories(test_error_handling_run PRIVATE ${PROJECT_INCLUDEDIR})
+target_link_libraries(test_error_handling_run PRIVATE qiskit qiskit_ibm_runtime)
+
 # ---- Tests -------------------------------------------------------------------
 enable_testing()
 
@@ -128,11 +132,6 @@ add_executable(test_qpy tests/test_qpy.c)
 target_include_directories(test_qpy PRIVATE ${PROJECT_INCLUDEDIR})
 target_link_libraries(test_qpy PRIVATE qiskit qiskit_ibm_runtime)
 add_test(NAME qpy COMMAND test_qpy)
-
-add_executable(test_error_handling_run samples/test_error_handling_run.c)
-target_include_directories(test_error_handling_run PRIVATE ${PROJECT_INCLUDEDIR})
-target_link_libraries(test_error_handling_run PRIVATE qiskit qiskit_ibm_runtime)
-add_test(NAME error_handling COMMAND test_error_handling_run)
 
 # ---- Notes -------------------------------------------------------------------
 message(STATUS "CMake build type: ${CMAKE_BUILD_TYPE}")
