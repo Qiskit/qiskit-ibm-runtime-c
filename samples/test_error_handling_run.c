@@ -77,7 +77,7 @@ int main(int argc, char *argv[]) {
         printf("    }\n");
         printf("  }\n");
         printf("  EOF\n");
-        printf("  ./test_error_handling\n\n");
+        printf("  ./test_error_handling_run\n\n");
         
         return res;
     }

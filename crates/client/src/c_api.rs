@@ -46,7 +46,7 @@ macro_rules! check_result {
             Ok(val) => val,
             Err(e) => {
                 let error_msg = format!("{}", &e);
-                log_err(&format!("{}", &e));
+                log_err(&error_msg);
                 crate::c_api::set_last_error(error_msg); 
                 return e.code();
             }

@@ -66,6 +66,7 @@ Before running the sampler examples, you must first set your account credentials
    export QISKIT_IBM_TOKEN="your_token"
    export QISKIT_IBM_INSTANCE="your_instance"
    export QISKIT_IBM_CHANNEL="ibm_quantum"  # optional
+   ```
 
 2. **Configuration File for local development**
 
@@ -78,7 +79,7 @@ Example of qiskit-ibm.json file:
   "default-ibm-quantum-platform": {
     "token": "YOUR_IBM_QUANTUM_TOKEN",
     "instance": "YOUR_INSTANCE_CRN",
-    "channel": "ibm_quantum",
+    "channel": "ibm_quantum"
   }
 }
 ```

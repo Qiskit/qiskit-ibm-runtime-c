@@ -243,7 +243,7 @@ fn get_account_config(filename: Option<&str>, name: Option<&str>) -> Result<Acco
         return Ok(AccountEntry {
             token,
             instance: Some(instance),
-            channel: std::env::var("QISKIT_IBM_CHANNEL").unwrap_or_else(|_| "ibm-quantum".to_string()),
+            channel: std::env::var("QISKIT_IBM_CHANNEL").unwrap_or_else(|_| "ibm_quantum".to_string()),
             url: std::env::var("QISKIT_IBM_URL").unwrap_or_else(|_| "https://auth.quantum-computing.ibm.com/api".to_string()),
             verify: true,
             private_endpoint: false,
