@@ -31,12 +31,12 @@ use crate::service::{
 };
 
 thread_local! {
-    static LAST_ERROR: RefCell<Option<CString>> = RefCell::new(None);
+    static LAST_ERROR: RefCell<Option<String>> = RefCell::new(None);
 }
 
 pub(crate) fn set_last_error(message: String) {
     LAST_ERROR.with(|e| {
-        *e.borrow_mut() = CString::new(message).ok();
+        *e.borrow_mut() = Some(message);
     });
 }
 
@@ -55,12 +55,13 @@ macro_rules! check_result {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn qkrt_get_last_error() -> *const c_char {
+pub unsafe extern "C" fn qkrt_get_last_error() -> *mut c_char {
     LAST_ERROR.with(|e| {
         e.borrow()
             .as_ref()
-            .map(|s| s.as_ptr())
-            .unwrap_or(std::ptr::null())
+            .and_then(|msg| CString::new(msg.as_str()).ok())
+            .map(|cstr| cstr.into_raw())
+            .unwrap_or(std::ptr::null_mut())
     })
 }
 

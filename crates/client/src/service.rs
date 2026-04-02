@@ -236,9 +236,7 @@ fn get_account_config(filename: Option<&str>, name: Option<&str>) -> Result<Acco
     if let Ok(token) = std::env::var("QISKIT_IBM_TOKEN") {
 
         let instance = std::env::var("QISKIT_IBM_INSTANCE")
-            .map_err(|_| ConfigError::MissingCredentials)?; //{
-                //var_name: "QISKIT_IBM_INSTANCE".to_string(),
-        //})?;
+            .map_err(|_| ConfigError::MissingCredentials)?; 
 
         return Ok(AccountEntry {
             token,

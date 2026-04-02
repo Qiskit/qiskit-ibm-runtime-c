@@ -38,6 +38,7 @@ void print_error(const char* context, int code) {
     const char* error_msg = qkrt_get_last_error();
     if (error_msg != NULL && error_msg[0] != '\0') {
         fprintf(stderr, "Error details:\n%s\n", error_msg);
+        qkrt_str_free(error_msg);
     } else {
         fprintf(stderr, "No detailed error message available.\n");
     }
