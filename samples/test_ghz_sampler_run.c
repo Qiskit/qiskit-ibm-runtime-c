@@ -76,7 +76,7 @@ int main(int argc, char *arv[]) {
     // Run Job on backend 
     int32_t shots = 10000;
     Job *job;
-    res = qkrt_sampler_job_run(&job, service, backends[selected_backend], transpile_result.circuit, shots, NULL);
+    res = qkrt_sampler_job_run(&job, service, backends[selected_backend], transpile_result.circuit, shots, NULL, NULL);
     if (res != 0) {
         printf("job submit failed with code: %d\n", res);
         goto cleanup_search;

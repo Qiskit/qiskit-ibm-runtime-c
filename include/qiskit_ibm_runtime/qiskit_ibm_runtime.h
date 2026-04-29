@@ -126,10 +126,13 @@ extern const char* qkrt_backend_instance_name(Backend *backend);
  * @param circuit A handle to the circuit to run.
  * @param shots The number of shots for this run.
  * @param runtime The name of the runtime.
+ * @param tags A pointer to a NULL-terminated array of tags.
  *
  * @return An exit code to indicate the status of the call.
  */
-extern int32_t qkrt_sampler_job_run(Job **out, Service *service, Backend *backend, QkCircuit *circuit, int32_t shots, char *runtime);
+extern int32_t qkrt_sampler_job_run(Job **out, Service *service, Backend *backend, QkCircuit *circuit, int32_t shots, char *runtime, const char *const *tags);
+
+extern int32_t qkrt_sampler_job_write_payload(QkCircuit *circuit, int32_t shots, char *backend, char *runtime, char *filename, const char *const *tags);
 
 /**
  * Submit a new estimator job given a circuit, observable, and the backend to run it on.

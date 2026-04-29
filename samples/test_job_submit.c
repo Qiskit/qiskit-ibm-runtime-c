@@ -42,6 +42,10 @@ int main(int argc, char *arv[]) {
         qk_circuit_measure(qc, i, i);
     }
     int32_t shots = 4196;
+
+    static const char *const tags[] = {"tag1", "tag2", NULL};
+
+    qkrt_sampler_job_write_payload(qc, shots, "ibm_backend_name", "the_runtime", "test_before_json_tags.qpy", tags);
     generate_qpy(qc, "test_before_json.qpy");
 
     int res = 0;
@@ -77,7 +81,7 @@ int main(int argc, char *arv[]) {
     printf("\nyou have selected backend: %s\n", qkrt_backend_name(backends[selected_backend]));
 
     Job *job;
-    res = qkrt_sampler_job_run(&job, service, backends[selected_backend], qc, shots, NULL);
+    res = qkrt_sampler_job_run(&job, service, backends[selected_backend], qc, shots, NULL, tags);
     if (res != 0) {
         printf("job submit failed with code: %d\n", res);
         goto cleanup_search;
