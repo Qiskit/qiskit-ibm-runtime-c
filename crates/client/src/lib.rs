@@ -77,6 +77,19 @@ pub enum ExitCode {
     IAMAPINotFound = 304,
     /// The IBM IAM returned a 409.
     IAMAPIConflict = 305,
+    
+    /// Configuration error - missing credentials.
+    ConfigMissingCredentials = 400,
+    /// Configuration error - home directory not found.
+    ConfigHomeDirectoryNotFound = 401,
+    /// Configuration error - config file not found.
+    ConfigFileNotFound = 403,
+    /// Configuration error - specified account not found.
+    ConfigAccountNotFound = 404,
+    /// Configuration error - invalid JSON in config file.
+    ConfigInvalidJson = 405,
+    /// Configuration error - no default account configured.
+    ConfigNoDefaultAccount = 406,
 }
 
 fn log_err(e: &impl AsRef<str>) {

@@ -234,3 +234,11 @@ extern void qkrt_expectation_values_free(ExpectationValues *evs);
  * @param The string to free.
  */
 extern void qkrt_str_free(char *string);
+
+/**
+ * Get the last error message from the Rust library.
+ * 
+ * @return Pointer to null-terminated error message string, or NULL if no error.
+ *         The pointer is valid until the next error occurs or the thread exits.
+ */
+ extern const char* qkrt_get_last_error(void);
