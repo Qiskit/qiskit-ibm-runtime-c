@@ -210,9 +210,23 @@ extern size_t qkrt_expectation_values_num_evs(ExpectationValues *evs);
  */
 extern char* qkrt_samples_get_sample(const Samples *samples, size_t index);
 
-
+/**
+ * Get a specified expectation value by index
+ * @param evs The handle of the expetation values returned from `qkrt_estimator_job_results`.
+ * @param index The index to get the expectation value of from `evs`.
+ */
 extern double qkrt_expectation_values_get_ev(ExpectationValues *evs, size_t index);
 
+/**
+ * Copy the expectation values into a double array.
+ *
+ * @param evs The handle to the expectation values from an estimator job
+ * @param out A pointer to the double array that the expectation values will be copied
+ *    into. The allocation this points to must have a sufficient space to store the
+ *    length of `evs`. You can use `qkrt_expectation_values_num_evs` to check the
+ *    length of `evs`.
+ */
+extern void qkrt_expectation_values_copy_into(ExpectationValues *evs, double *out);
 
 /**
  * Free the provided samples.
