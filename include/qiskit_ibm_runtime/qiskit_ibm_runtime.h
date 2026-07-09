@@ -281,13 +281,41 @@ extern uint64_t qkrt_counts_get_by_sample(Counts *counts, char *sample);
 
 /**
  * A count entry from a Counts.
+ *
+ * The `name` field contains a pointer to a seperate string copy and this struct will need to be
+ * cleared with `qkrt_count_clear` to free that allocation.
  */
 typedef struct {
-    /// The sample string. This is a pointer to an owned copy and must be freed.
+    /// The sample string.
     char *name;
     /// The number of occurences of the sample string
     uint64_t count;
 } QkrtCount;
+
+/**
+ * Clear the contents of a QkrtCount object
+ *
+ * This function will clear the contents of a QkrtCount object. It will free
+ * the string `name` field and set the pointer to null and reset the `count`
+ * value to 0. This is typically so you can reuse a single `QkrtCount` object with
+ * multiple calls to `qkrt_counts_get_count`. For example, something like:
+ *
+ * ```c
+ * void function(Counts *counts) {
+ *   size_t length = qkrt_counts_length(counts);
+ *   QkrtCount count = {null, 0};
+ *   for (size_t i = 0; i < length; i++) {
+ *       qkrt_counts_get_count(counts, i, &count);
+ *       qkrt_count_clear(count);
+ *   }
+ * }
+ * ```
+ *
+ * @param count A pointer to the count object to clear. This must be a valid
+ * aligned pointer. It can be null in which case this function is a no-op.
+ *
+ */
+extern void qkrt_count_clear(QkrtCount *count);
 /**
  * Get the count from the counts histogram by index
  *

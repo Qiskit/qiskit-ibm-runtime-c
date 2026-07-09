@@ -342,7 +342,7 @@ pub unsafe extern "C" fn qkrt_counts_length(counts: *const Counts) -> usize {
 
 #[repr(C)]
 pub struct QkrtCount {
-    name: *const c_char,
+    name: *mut c_char,
     count: u64,
 }
 
@@ -360,6 +360,16 @@ pub unsafe extern "C" fn qkrt_counts_get_count(
     out_count.name = CString::new(counts_tuple.0.as_bytes()).unwrap().into_raw();
     out_count.count = counts_tuple.1;
     ExitCode::Success
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_count_clear(count: *mut QkrtCount) {
+    if !count.is_null() {
+        let counts = unsafe { mut_ptr_as_ref(count) };
+        let _ = CString::from_raw(counts.name);
+        counts.name = std::ptr::null_mut();
+        counts.count = 0;
+    }
 }
 
 #[no_mangle]
