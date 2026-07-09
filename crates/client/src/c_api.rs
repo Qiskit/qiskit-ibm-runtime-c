@@ -110,7 +110,9 @@ pub unsafe extern "C" fn qkrt_service_new(out: *mut *mut Service) -> ExitCode {
 #[repr(C)]
 pub struct QkrtServiceConfig {
     token: *const c_char,
-    url: *const c_char,
+    iam_url: *const c_char,
+    iqp_url: *const c_char,
+    global_search_url: *const c_char,
     user_agent: *const c_char,
     filename: *const c_char,
     account_name: *const c_char,
@@ -120,7 +122,9 @@ pub struct QkrtServiceConfig {
 pub unsafe extern "C" fn qkrt_default_service_config() -> QkrtServiceConfig {
     QkrtServiceConfig {
         token: std::ptr::null(),
-        url: std::ptr::null(),
+        iam_url: std::ptr::null(),
+        iqp_url: std::ptr::null(),
+        global_search_url: std::ptr::null(),
         user_agent: std::ptr::null(),
         filename: std::ptr::null(),
         account_name: std::ptr::null(),
@@ -138,10 +142,30 @@ pub unsafe extern "C" fn qkrt_service_new_from_config(
     } else {
         Some(CStr::from_ptr(config.token).to_str().unwrap().to_owned())
     };
-    let url = if config.url.is_null() {
+    let iam_url = if config.iam_url.is_null() {
         None
     } else {
-        Some(CStr::from_ptr(config.url).to_str().unwrap().to_owned())
+        Some(CStr::from_ptr(config.iqp_url).to_str().unwrap().to_owned())
+    };
+    let iqp_url = if config.iam_url.is_null() {
+        None
+    } else {
+        Some(
+            CStr::from_ptr(config.global_search_url)
+                .to_str()
+                .unwrap()
+                .to_owned(),
+        )
+    };
+    let global_search_url = if config.iam_url.is_null() {
+        None
+    } else {
+        Some(
+            CStr::from_ptr(config.global_search_url)
+                .to_str()
+                .unwrap()
+                .to_owned(),
+        )
     };
     let user_agent = if config.user_agent.is_null() {
         None
@@ -167,7 +191,9 @@ pub unsafe extern "C" fn qkrt_service_new_from_config(
         return ExitCode::NullPointerError;
     }
     let account_config = AccountConfig {
-        base_path: url,
+        iam_url,
+        iqp_url,
+        global_search_url,
         user_agent: user_agent.clone(),
         token,
     };

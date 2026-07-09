@@ -271,6 +271,11 @@ impl Service {
             key: account.get_access_token().unwrap().to_string(),
             prefix: Some("Bearer".to_string()),
         });
+        if let Some(ref user_config) = account.user_config {
+            if let Some(ref iqp_url) = user_config.iqp_url {
+                quantum_config.base_path = iqp_url.clone();
+            }
+        }
 
         Service {
             account,
@@ -285,6 +290,7 @@ pub struct Account {
     pub config: AccountEntry,
     token: TokenResponse,
     iam_config: Configuration,
+    user_config: Option<AccountConfig>,
 }
 
 impl Account {
@@ -328,11 +334,15 @@ pub async fn get_account_from_config(
         config,
         token: response,
         iam_config,
+        user_config: None,
     })
 }
 
+#[derive(Clone, Debug)]
 pub(crate) struct AccountConfig {
-    pub(crate) base_path: Option<String>,
+    pub(crate) iam_url: Option<String>,
+    pub(crate) iqp_url: Option<String>,
+    pub(crate) global_search_url: Option<String>,
     pub(crate) user_agent: Option<String>,
     pub(crate) token: Option<String>,
 }
@@ -345,11 +355,13 @@ pub async fn get_account(
     let file_config = get_account_config(filename, name);
     let iam_config = Configuration {
         base_path: config
-            .base_path
+            .iam_url
+            .clone()
             .unwrap_or("https://iam.cloud.ibm.com".to_owned()),
         user_agent: Some(
             config
                 .user_agent
+                .clone()
                 .unwrap_or("qiskit-ibm-runtime-rs/0.0.1".to_owned()),
         ),
         client: reqwest::Client::new(),
@@ -376,6 +388,7 @@ pub async fn get_account(
         config: file_config,
         token: response,
         iam_config,
+        user_config: Some(config),
     })
 }
 
@@ -386,6 +399,11 @@ pub async fn list_instances(account: &Account) -> Result<Vec<Instance>, ServiceE
         key: account.get_access_token().unwrap().to_string(),
         prefix: Some("Bearer".to_string()),
     });
+    if let Some(ref user_config) = account.user_config {
+        if let Some(ref base_path) = user_config.global_search_url {
+            config.base_path = base_path.clone()
+        }
+    }
     let body = ibmcloud_global_search_api::models::SearchRequest::FirstCall(Box::new(
         ibmcloud_global_search_api::models::FirstCall {
             query: "service_name:quantum-computing".to_string(),

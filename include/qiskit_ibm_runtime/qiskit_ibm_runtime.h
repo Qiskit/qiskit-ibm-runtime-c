@@ -56,8 +56,15 @@ typedef struct {
     /// The token to use to authenticate against IBM cloud with. By default it will be read from the
     /// specified config file
     const char *token;
-    /// The base url to use for connecting to IBM cloud with. By default it will be "https://iam.cloud.ibm.com"
-    const char *url;
+    /// The url to use for connecting to IBM Cloud Identity and Access Management. If this is a null pointer by
+    /// default it will be "https://iam.cloud.ibm.com".
+    const char *iam_url;
+    /// The url to use for connecting to the IBM Quantum Platform. If this is a null pointer by
+    /// default it will be "https://quantum.cloud.ibm.com".
+    const char *iqp_url;
+    /// The url to use for connecting to the IBM Cloud Global Search. If this is a null pointer by
+    /// default it will be "https://api.global-search-tagging.cloud.ibm.com".
+    const char *global_search_url;
     /// The user agent to set for all requests made from the service. By default it will be: "qiskit-ibm-runtime-rs/0.0.1"
     const char *user_agent;
     /// The filename to the json configuration to read from. By default it will use from "$HOME/.qiskit/qiskit-ibm.json".
