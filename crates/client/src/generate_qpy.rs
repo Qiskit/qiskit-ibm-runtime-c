@@ -52,6 +52,8 @@ pub fn generate_qpy_payload(circuit: &qiskit_circuit::Circuit) -> BinResult<Vec<
             bit_indices: (0..circuit.num_clbits()).map(|x| x as i64).collect(),
         }]
     } else {
+        // Workaround for IBM Quantum Platform API error described at
+        // https://github.com/Qiskit/qiskit-ibm-runtime-c/pull/17
         vec![]
     };
     let circuit_header = qpy_formats::CircuitHeaderV12Pack {
