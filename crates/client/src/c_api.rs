@@ -399,7 +399,7 @@ pub unsafe extern "C" fn qkrt_counts_most_frequent(counts: *const Counts) -> *mu
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn qkrt_counts_least_frequent(counts: *const Counts) -> *const c_char {
+pub unsafe extern "C" fn qkrt_counts_least_frequent(counts: *const Counts) -> *mut c_char {
     let counts = unsafe { const_ptr_as_ref(counts) };
     CString::new(counts.least_frequent().as_bytes())
         .unwrap()
