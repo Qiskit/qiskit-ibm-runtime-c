@@ -232,7 +232,7 @@ extern void qkrt_samples_free(Samples *samples);
 extern Counts *qkrt_samples_to_counts(Samples *samples);
 
 /**
- * Get the number entries in a Counts
+ * Get the number of entries in a Counts
  */
 extern size_t qkrt_counts_length(Counts *counts);
 
@@ -251,7 +251,7 @@ extern void qkrt_counts_display(Counts *counts);
 extern char *qkrt_counts_most_frequent(Counts *counts);
 
 /**
- * Return the most frequent sample from the counts object
+ * Return the least frequent sample from the counts object
  *
  * This function will panic if the counts histogram is empty. You should
  * check that `qkrt_counts_length` is greater than 0 before calling
@@ -282,13 +282,13 @@ extern uint64_t qkrt_counts_get_by_sample(Counts *counts, char *sample);
 /**
  * A count entry from a Counts.
  *
- * The `name` field contains a pointer to a seperate string copy and this struct will need to be
+ * The `name` field contains a pointer to a separate string copy and this struct will need to be
  * cleared with `qkrt_count_clear` to free that allocation.
  */
 typedef struct {
     /// The sample string.
     char *name;
-    /// The number of occurences of the sample string
+    /// The number of occurrences of the sample string
     uint64_t count;
 } QkrtCount;
 
@@ -306,7 +306,7 @@ typedef struct {
  *   QkrtCount count = {null, 0};
  *   for (size_t i = 0; i < length; i++) {
  *       qkrt_counts_get_count(counts, i, &count);
- *       qkrt_count_clear(count);
+ *       qkrt_count_clear(&count);
  *   }
  * }
  * ```
@@ -322,9 +322,8 @@ extern void qkrt_count_clear(QkrtCount *count);
  * @param counts A pointer to the counts histogram to read the count from
  * @param index The index to get the count for
  * @param out_count A pointer to the QkrtCount object to write the count data into.
- *     Note that this does not free the name field you should call `qkrt_str_free()` on
- *     the name field if a string has been set in the name already. Otherwise passing an
- *     existing QkrtCount in for this will cause a memory leak.
+ *     Note that you must call `qkrt_count_clear()` after processing
+ *     the count to avoid a memory leak.
  *
  * @return An exit code to indicate whether the index was valid. It will be non-zero
  * if the index is not valid
