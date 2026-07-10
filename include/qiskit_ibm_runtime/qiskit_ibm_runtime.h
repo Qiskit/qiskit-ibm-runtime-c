@@ -17,6 +17,7 @@ typedef struct Job Job;
 typedef struct Backend Backend;
 typedef struct BackendSearchResults BackendSearchResults;
 typedef struct Samples Samples;
+typedef struct Counts Counts;
 typedef struct ExpectationValues ExpectationValues;
 
 /**
@@ -231,9 +232,124 @@ extern void qkrt_expectation_values_copy_into(ExpectationValues *evs, double *ou
 /**
  * Free the provided samples.
  *
- * @param The handle of the samples to free.
+ * @param samples The handle of the samples to free.
  */
 extern void qkrt_samples_free(Samples *samples);
+
+/**
+ * Create a counts histogram from a Samples array
+ *
+ * @param samples the samples to read and create a new Counts from
+ *
+ * @returns A pointer to the new Counts.
+ */
+extern Counts *qkrt_samples_to_counts(Samples *samples);
+
+/**
+ * Get the number of entries in a Counts
+ */
+extern size_t qkrt_counts_length(Counts *counts);
+
+/**
+ * Display the contents of the histogram to stdout
+ */
+extern void qkrt_counts_display(Counts *counts);
+
+/**
+ * Return the most frequent sample from the counts object
+ *
+ * This function will panic if the counts histogram is empty. You should
+ * check that `qkrt_counts_length` is greater than 0 before calling
+ * this function.
+ */
+extern char *qkrt_counts_most_frequent(Counts *counts);
+
+/**
+ * Return the least frequent sample from the counts object
+ *
+ * This function will panic if the counts histogram is empty. You should
+ * check that `qkrt_counts_length` is greater than 0 before calling
+ * this function.
+ */
+extern char *qkrt_counts_least_frequent(Counts *counts);
+
+/**
+ * Sort in-place the counts histogram in order of counts for each sample
+ *
+ * @param counts The counts object to sample
+ * @param most_frequent_first If true reverse the sorting so the sample with the largest counts is first
+ */
+extern void qkrt_counts_sort_by_frequency(Counts *counts, bool most_frequent_first);
+
+/**
+ * Look up a sample's count
+ *
+ * @param counts The counts object to sample
+ * @param sample The sample to look up the count for
+ * @returns the count of a particular sample in the count histogram. If the
+ *    sample is not present in histogram a value of 18446744073709551615 (the
+ *    max value for the integer type uint64_t) will be returned to indicate
+ *    it is not present.
+ */
+extern uint64_t qkrt_counts_get_by_sample(Counts *counts, char *sample);
+
+/**
+ * A count entry from a Counts.
+ *
+ * The `name` field contains a pointer to a separate string copy and this struct will need to be
+ * cleared with `qkrt_count_clear` to free that allocation.
+ */
+typedef struct {
+    /// The sample string.
+    char *name;
+    /// The number of occurrences of the sample string
+    uint64_t count;
+} QkrtCount;
+
+/**
+ * Clear the contents of a QkrtCount object
+ *
+ * This function will clear the contents of a QkrtCount object. It will free
+ * the string `name` field and set the pointer to null and reset the `count`
+ * value to 0. This is typically so you can reuse a single `QkrtCount` object with
+ * multiple calls to `qkrt_counts_get_count`. For example, something like:
+ *
+ * ```c
+ * void function(Counts *counts) {
+ *   size_t length = qkrt_counts_length(counts);
+ *   QkrtCount count = {null, 0};
+ *   for (size_t i = 0; i < length; i++) {
+ *       qkrt_counts_get_count(counts, i, &count);
+ *       qkrt_count_clear(&count);
+ *   }
+ * }
+ * ```
+ *
+ * @param count A pointer to the count object to clear. This must be a valid
+ * aligned pointer. It can be null in which case this function is a no-op.
+ *
+ */
+extern void qkrt_count_clear(QkrtCount *count);
+/**
+ * Get the count from the counts histogram by index
+ *
+ * @param counts A pointer to the counts histogram to read the count from
+ * @param index The index to get the count for
+ * @param out_count A pointer to the QkrtCount object to write the count data into.
+ *     Note that you must call `qkrt_count_clear()` after processing
+ *     the count to avoid a memory leak.
+ *
+ * @return An exit code to indicate whether the index was valid. It will be non-zero
+ * if the index is not valid
+ */
+extern int32_t qkrt_counts_get_count(Counts *counts, size_t index, QkrtCount *out_count);
+
+/**
+ * Free the provided counts.
+ *
+ * @param counts The handle of the counts to free
+ */
+extern void qkrt_counts_free(Counts *counts);
 
 /**
  * Free the provided array of expectation values.

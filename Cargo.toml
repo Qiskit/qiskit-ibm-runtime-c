@@ -16,6 +16,8 @@ serde_json = "1.0"
 serde = "1.0"
 reqwest = "^0.12"
 tokio = { version = "1", features = ["full"] }
+indexmap = "2.13"
+foldhash = "0.2.0"
 
 # These are our own crates.
 ibm-quantum-platform-api = { path = "crates/ibm-quantum-platform-api"}
