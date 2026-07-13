@@ -23,10 +23,10 @@ use std::io::prelude::*;
 use std::path::Path;
 
 use crate::service::{
-    get_account_from_config, get_backend, get_backends, get_estimator_job_results, get_job_details,
-    get_job_status, get_sampler_job_results, list_instances, submit_estimator_job,
-    submit_sampler_job, Backend, BackendSearchResults, ExpectationValues, Job, JobDetails, Samples,
-    Service,
+    get_account, get_account_from_config, get_backend, get_backends, get_estimator_job_results,
+    get_job_details, get_job_status, get_sampler_job_results, list_instances, submit_estimator_job,
+    submit_sampler_job, AccountConfig, Backend, BackendSearchResults, ExpectationValues, Job,
+    JobDetails, Samples, Service,
 };
 
 use crate::counts::Counts;
@@ -105,7 +105,113 @@ pub unsafe extern "C" fn qkrt_service_new(out: *mut *mut Service) -> ExitCode {
         // Filter-out any instance that doesn't match the user's config.
         instances.retain(|x| x.crn.to_str().unwrap() == instance)
     }
-    *out = Box::into_raw(Box::new(Service::new(account, instances)));
+    *out = Box::into_raw(Box::new(Service::new(account, instances, None)));
+    ExitCode::Success
+}
+
+#[repr(C)]
+pub struct QkrtServiceConfig {
+    token: *const c_char,
+    iam_url: *const c_char,
+    iqp_url: *const c_char,
+    global_search_url: *const c_char,
+    user_agent: *const c_char,
+    filename: *const c_char,
+    account_name: *const c_char,
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_default_service_config() -> QkrtServiceConfig {
+    QkrtServiceConfig {
+        token: std::ptr::null(),
+        iam_url: std::ptr::null(),
+        iqp_url: std::ptr::null(),
+        global_search_url: std::ptr::null(),
+        user_agent: std::ptr::null(),
+        filename: std::ptr::null(),
+        account_name: std::ptr::null(),
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_service_new_from_config(
+    config: *const QkrtServiceConfig,
+    out: *mut *mut Service,
+) -> ExitCode {
+    let config = const_ptr_as_ref(config);
+    let token = if config.token.is_null() {
+        None
+    } else {
+        Some(CStr::from_ptr(config.token).to_str().unwrap().to_owned())
+    };
+    let iam_url = if config.iam_url.is_null() {
+        None
+    } else {
+        Some(CStr::from_ptr(config.iam_url).to_str().unwrap().to_owned())
+    };
+    let iqp_url = if config.iqp_url.is_null() {
+        None
+    } else {
+        Some(
+            CStr::from_ptr(config.iqp_url)
+                .to_str()
+                .unwrap()
+                .to_owned(),
+        )
+    };
+    let global_search_url = if config.global_search_url.is_null() {
+        None
+    } else {
+        Some(
+            CStr::from_ptr(config.global_search_url)
+                .to_str()
+                .unwrap()
+                .to_owned(),
+        )
+    };
+    let user_agent = if config.user_agent.is_null() {
+        None
+    } else {
+        Some(
+            CStr::from_ptr(config.user_agent)
+                .to_str()
+                .unwrap()
+                .to_owned(),
+        )
+    };
+    let filename = if config.filename.is_null() {
+        None
+    } else {
+        Some(CStr::from_ptr(config.filename).to_str().unwrap())
+    };
+    let account_name = if config.account_name.is_null() {
+        None
+    } else {
+        Some(CStr::from_ptr(config.account_name).to_str().unwrap())
+    };
+    if out.is_null() {
+        return ExitCode::NullPointerError;
+    }
+    let account_config = AccountConfig {
+        iam_url,
+        iqp_url,
+        global_search_url,
+        user_agent: user_agent.clone(),
+        token,
+    };
+    *out = std::ptr::null_mut();
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+    let account = check_result!(rt.block_on(get_account(account_config, filename, account_name)));
+    let mut instances = check_result!(rt.block_on(list_instances(&account)));
+    if let Some(instance) = &account.config.instance {
+        // Filter-out any instance that doesn't match the user's config.
+        instances.retain(|x| x.crn.to_str().unwrap() == instance);
+    }
+    *out = Box::into_raw(Box::new(Service::new(account, instances, user_agent)));
+
     ExitCode::Success
 }
 

@@ -112,6 +112,10 @@ add_executable(test_ghz_estimator_run samples/test_ghz_estimator_run.c)
 target_include_directories(test_ghz_estimator_run PRIVATE ${PROJECT_INCLUDEDIR})
 target_link_libraries(test_ghz_estimator_run PRIVATE qiskit qiskit_ibm_runtime)
 
+add_executable(test_ghz_run_custom_user_agent samples/test_ghz_run_custom_user_agent.c)
+target_include_directories(test_ghz_run_custom_user_agent PRIVATE ${PROJECT_INCLUDEDIR})
+target_link_libraries(test_ghz_run_custom_user_agent PRIVATE qiskit qiskit_ibm_runtime)
+
 add_executable(test_lucj_fe4s4 samples/test_lucj_fe4s4.c)
 target_include_directories(test_lucj_fe4s4 PRIVATE ${PROJECT_INCLUDEDIR})
 target_link_libraries(test_lucj_fe4s4 PRIVATE qiskit qiskit_ibm_runtime)
