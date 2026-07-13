@@ -147,19 +147,19 @@ pub unsafe extern "C" fn qkrt_service_new_from_config(
     let iam_url = if config.iam_url.is_null() {
         None
     } else {
-        Some(CStr::from_ptr(config.iqp_url).to_str().unwrap().to_owned())
+        Some(CStr::from_ptr(config.iam_url).to_str().unwrap().to_owned())
     };
-    let iqp_url = if config.iam_url.is_null() {
+    let iqp_url = if config.iqp_url.is_null() {
         None
     } else {
         Some(
-            CStr::from_ptr(config.global_search_url)
+            CStr::from_ptr(config.iqp_url)
                 .to_str()
                 .unwrap()
                 .to_owned(),
         )
     };
-    let global_search_url = if config.iam_url.is_null() {
+    let global_search_url = if config.global_search_url.is_null() {
         None
     } else {
         Some(
