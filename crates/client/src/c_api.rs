@@ -12,7 +12,7 @@
 
 use crate::generate_job_params::create_sampler_job_payload;
 use crate::generate_qpy::generate_qpy_payload;
-use crate::pointers::const_ptr_as_ref;
+use crate::pointers::{const_ptr_as_ref, mut_ptr_as_ref};
 use crate::qiskit_circuit::Circuit;
 use crate::qiskit_ffi::{QkCircuit, QkObs, QkTarget};
 use crate::qiskit_observable::SparseObservable;
@@ -28,6 +28,8 @@ use crate::service::{
     submit_sampler_job, AccountConfig, Backend, BackendSearchResults, ExpectationValues, Job,
     JobDetails, Samples, Service,
 };
+
+use crate::counts::Counts;
 
 macro_rules! check_result {
     ($expr:expr) => {
@@ -432,6 +434,51 @@ pub unsafe extern "C" fn qkrt_sampler_job_results(
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn qkrt_samples_to_counts(samples: *const Samples) -> *mut Counts {
+    let samples = unsafe { const_ptr_as_ref(samples) };
+    let histogram = Counts::from_samples(&samples.0);
+    Box::into_raw(Box::new(histogram))
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_counts_length(counts: *const Counts) -> usize {
+    let counts = unsafe { const_ptr_as_ref(counts) };
+    counts.len()
+}
+
+#[repr(C)]
+pub struct QkrtCount {
+    name: *mut c_char,
+    count: u64,
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_counts_get_count(
+    counts: *const Counts,
+    index: usize,
+    out_count: *mut QkrtCount,
+) -> ExitCode {
+    let counts = unsafe { const_ptr_as_ref(counts) };
+    let out_count = unsafe { mut_ptr_as_ref(out_count) };
+    let Some(counts_tuple) = counts.get_item(index) else {
+        return ExitCode::BadArgumentError;
+    };
+    out_count.name = CString::new(counts_tuple.0.as_bytes()).unwrap().into_raw();
+    out_count.count = counts_tuple.1;
+    ExitCode::Success
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_count_clear(count: *mut QkrtCount) {
+    if !count.is_null() {
+        let counts = unsafe { mut_ptr_as_ref(count) };
+        let _ = CString::from_raw(counts.name);
+        counts.name = std::ptr::null_mut();
+        counts.count = 0;
+    }
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn qkrt_estimator_job_results(
     out: *mut *mut ExpectationValues,
     service: *const Service,
@@ -447,6 +494,46 @@ pub unsafe extern "C" fn qkrt_estimator_job_results(
     let boxed_results_raw_ptr = Box::into_raw(Box::new(results));
     *out = boxed_results_raw_ptr;
     ExitCode::Success
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_counts_most_frequent(counts: *const Counts) -> *mut c_char {
+    let counts = unsafe { const_ptr_as_ref(counts) };
+    CString::new(counts.most_frequent().as_bytes())
+        .unwrap()
+        .into_raw()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_counts_least_frequent(counts: *const Counts) -> *mut c_char {
+    let counts = unsafe { const_ptr_as_ref(counts) };
+    CString::new(counts.least_frequent().as_bytes())
+        .unwrap()
+        .into_raw()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_counts_sort_by_frequency(
+    counts: *mut Counts,
+    most_frequent_first: bool,
+) {
+    let counts = unsafe { mut_ptr_as_ref(counts) };
+    counts.sort_by_frequency(most_frequent_first);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_counts_get_by_sample(
+    counts: *const Counts,
+    sample: *const c_char,
+) -> u64 {
+    let counts = unsafe { const_ptr_as_ref(counts) };
+    let sample_str = CStr::from_ptr(sample).to_str().unwrap();
+    counts.get(sample_str).unwrap_or(u64::MAX)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_counts_display(counts: *const Counts) {
+    unsafe { const_ptr_as_ref(counts) }.display()
 }
 
 #[no_mangle]
@@ -480,6 +567,19 @@ pub unsafe extern "C" fn qkrt_expectation_values_get_ev(
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn qkrt_expectation_values_copy_into(
+    evs: *const ExpectationValues,
+    out: *mut f64,
+) {
+    let evs = unsafe { const_ptr_as_ref(evs) };
+    let out_slice = unsafe { std::slice::from_raw_parts_mut(out, evs.0.len()) };
+    evs.0
+        .iter()
+        .zip(out_slice.iter_mut())
+        .for_each(|(src, dst)| *dst = *src);
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn qkrt_str_free(string: *mut c_char) {
     let _ = CString::from_raw(string);
 }
@@ -488,6 +588,13 @@ pub unsafe extern "C" fn qkrt_str_free(string: *mut c_char) {
 pub unsafe extern "C" fn qkrt_samples_free(samples: *mut Samples) {
     if !samples.is_null() {
         drop(Box::from_raw(samples))
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_counts_free(counts: *mut Counts) {
+    if !counts.is_null() {
+        drop(Box::from_raw(counts))
     }
 }
 
@@ -534,4 +641,17 @@ pub extern "C" fn get_access_token() {
     let account = rt.block_on(get_account_from_config(None, None)).unwrap();
     println!("run");
     println!("token: {:?}", account.get_access_token());
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_copy_evs() {
+        let evs = ExpectationValues(vec![1.0, 0.0, -1.5]);
+        let mut out: Vec<f64> = vec![0.0; 3];
+        unsafe { qkrt_expectation_values_copy_into(&evs, out.as_mut_ptr()) };
+        assert_eq!(out, evs.0);
+    }
 }

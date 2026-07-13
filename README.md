@@ -12,8 +12,8 @@ but expose that to C.
 > [!WARNING]
 > This library is an early prototype and is still under active development.
 > There are currently no backwards compatibility guarantees as the library
-> is developed. This library also only supports a single Qiskit version at a
-> time, currently only 2.2.0 is supported.
+> is developed. This library currently only supports the Qiskit minor versions
+> 2.2, 2.3, and 2.4.
 
 
 ## Getting Started
@@ -59,4 +59,3 @@ This software is licensed under the Apache 2.0 license.
 While most source files include a license header, some generated source files do not
 (including sources from crates `ibm-quantum-platform-api`, `ibmcloud-global-search-api`,
 and `ibmcloud-iam-api`). All of these sources are still provided under Apache 2.0.
-
