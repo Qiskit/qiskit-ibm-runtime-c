@@ -87,7 +87,6 @@ add_custom_command(
         --locked
         --target-dir ${CARGO_TARGET_DIR}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        BYPRODUCTS ${RUST_LIBPATH}
         COMMENT "Building Rust library (cargo ${CARGO_PROFILE} → ${RUST_LIBPATH})"
         VERBATIM
 )
