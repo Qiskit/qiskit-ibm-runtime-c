@@ -69,6 +69,7 @@ pub unsafe extern "C" fn qkrt_sampler_job_write_payload(
     backend: *const c_char,
     runtime: *const c_char,
     filename: *const c_char,
+    tags: *const *const c_char,
 ) {
     let circuit = Circuit(circuit);
     let path = unsafe { Path::new(CStr::from_ptr(filename).to_str().unwrap()) };
@@ -79,14 +80,18 @@ pub unsafe extern "C" fn qkrt_sampler_job_write_payload(
     } else {
         unsafe { Some(CStr::from_ptr(runtime).to_str().unwrap().to_string()) }
     };
-    //    let tags = if tags.is_null() {
-    //        None
-    //    } else {
-    //        unsafe { Some(CStr::from_ptr(tags).to_str().unwrap().to_string()) }
-    //    };
-
-    let model = create_sampler_job_payload(&circuit, backend, Some(shots), runtime, None);
+    let tags = c_str_array_to_vec(tags);
+    let model = create_sampler_job_payload(&circuit, backend, Some(shots), runtime, tags);
     serde_json::to_writer_pretty(file, &model).unwrap();
+}
+
+unsafe fn c_str_array_to_vec(ptr: *const *const c_char) -> Option<Vec<String>> {
+    if ptr.is_null() { return None; }
+    let it = std::iter::successors(Some(ptr), |p| Some(p.add(1)))
+        .map(|p| *p)
+        .take_while(|p| !p.is_null())
+        .map(|p| CStr::from_ptr(p).to_str().unwrap().to_owned());
+    Some(it.collect())
 }
 
 #[no_mangle]
@@ -212,6 +217,7 @@ pub unsafe extern "C" fn qkrt_sampler_job_run(
     circuit: *mut QkCircuit,
     shots: i32,
     runtime: *const c_char,
+    tags: *const *const c_char,
 ) -> ExitCode {
     if out.is_null() {
         return ExitCode::NullPointerError;
@@ -229,6 +235,7 @@ pub unsafe extern "C" fn qkrt_sampler_job_run(
     } else {
         unsafe { Some(CStr::from_ptr(runtime).to_str().unwrap().to_string()) }
     };
+    let tags = c_str_array_to_vec(tags);
     let shots = if shots < 0 { None } else { Some(shots) };
     let job = check_result!(rt.block_on(submit_sampler_job(
         service,
@@ -236,7 +243,7 @@ pub unsafe extern "C" fn qkrt_sampler_job_run(
         &Circuit(circuit),
         shots,
         runtime,
-        None,
+        tags,
     )));
     *out = Box::into_raw(Box::new(job));
     ExitCode::Success
