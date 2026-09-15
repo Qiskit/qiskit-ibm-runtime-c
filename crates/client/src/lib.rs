@@ -11,6 +11,7 @@
 // that they have been altered from the originals.
 
 mod c_api;
+pub mod counts;
 mod generate_job_params;
 pub mod generate_qpy;
 mod pointers;
