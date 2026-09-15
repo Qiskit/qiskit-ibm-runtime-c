@@ -116,6 +116,10 @@ add_executable(test_lucj_fe4s4 samples/test_lucj_fe4s4.c)
 target_include_directories(test_lucj_fe4s4 PRIVATE ${PROJECT_INCLUDEDIR})
 target_link_libraries(test_lucj_fe4s4 PRIVATE qiskit qiskit_ibm_runtime)
 
+add_executable(test_error_handling_run samples/test_error_handling_run.c)
+target_include_directories(test_error_handling_run PRIVATE ${PROJECT_INCLUDEDIR})
+target_link_libraries(test_error_handling_run PRIVATE qiskit qiskit_ibm_runtime)
+
 # ---- Tests -------------------------------------------------------------------
 enable_testing()
 
