@@ -19,7 +19,7 @@ use ibm_quantum_platform_api::apis::backends_api::{
     get_backend_configuration, get_backend_properties, list_backends,
 };
 use ibm_quantum_platform_api::apis::jobs_api::{
-    create_job, get_job_details_jid, get_job_results_jid,
+    create_job, get_estimator_job_results_jid, get_job_details_jid, get_sampler_job_results_jid,
 };
 use ibm_quantum_platform_api::models::{
     BackendsResponseV2DevicesInner, CreateJob200Response, CreateJobRequest,
@@ -33,7 +33,6 @@ use ibmcloud_iam_api::models::token_response::TokenResponse;
 use crate::{log_debug, log_warn, ExitCode};
 use ibm_quantum_platform_api::models;
 use ibm_quantum_platform_api::models::job_response::Status;
-use ibm_quantum_platform_api::models::SamplerV2Result;
 use std::collections::HashMap;
 use std::error;
 use std::ffi::{c_char, CString};
@@ -496,7 +495,7 @@ pub async fn get_backend(service: &Service, backend: &Backend) -> crate::qiskit_
     let measure_props = backend_properties["qubits"]
         .as_array()
         .unwrap()
-        .into_iter()
+        .iter()
         .enumerate()
         .map(|(idx, props)| {
             let mut error = None;
@@ -514,6 +513,40 @@ pub async fn get_backend(service: &Service, backend: &Backend) -> crate::qiskit_
         });
     target.add_measure(measure_props);
     target
+}
+
+pub async fn submit_estimator_job(
+    service: &Service,
+    backend: &Backend,
+    circuit: &crate::qiskit_circuit::Circuit,
+    observable: &crate::qiskit_observable::SparseObservable,
+    runtime: Option<String>,
+    tags: Option<Vec<String>>,
+) -> Result<Job, ServiceError> {
+    let crn = backend.instance.crn.to_str().unwrap();
+    let job_payload = crate::generate_job_params::create_estimator_job_payload(
+        circuit,
+        observable,
+        backend.response.name.clone(),
+        None,
+        runtime,
+        tags,
+    );
+    let res = create_job(
+        &service.quantum_config,
+        crn,
+        Some("2025-06-01"),
+        None,
+        Some(CreateJobRequest::CreateJobRequestOneOf(Box::new(
+            job_payload,
+        ))),
+    )
+    .await?;
+    log_debug(&format!("submit_sampler_job response: {:?}", res));
+    Ok(Job {
+        instance: backend.instance.clone(),
+        response: res,
+    })
 }
 
 pub async fn submit_sampler_job(
@@ -564,11 +597,17 @@ pub async fn get_job_details(service: &Service, job: &Job) -> Result<JobDetails,
 }
 
 #[derive(Debug)]
-pub struct Samples(pub Vec<String>, pub u32);
+pub struct Samples {
+    pub samples: Vec<String>,
+    pub num_bits: u32,
+}
 
-pub async fn get_job_results(service: &Service, job: &Job) -> Result<Samples, ServiceError> {
+pub async fn get_sampler_job_results(
+    service: &Service,
+    job: &Job,
+) -> Result<Samples, ServiceError> {
     let crn = job.instance.crn.to_str().unwrap();
-    let details = get_job_results_jid(
+    let details = get_sampler_job_results_jid(
         &service.quantum_config,
         crn,
         &job.response.id,
@@ -576,17 +615,41 @@ pub async fn get_job_results(service: &Service, job: &Job) -> Result<Samples, Se
     )
     .await?;
     log_debug(&format!("get_job_result response: {:?}", details));
-    let num_bits = details.results[0].data["meas"].num_bits;
-    let res = Ok(Samples(
-        details
+    let num_bits = details
+        .results
+        .first()
+        .map(|x| x.data["meas"].num_bits)
+        .unwrap_or(0);
+    Ok(Samples {
+        samples: details
             .results
             .iter()
             .flat_map(|x| x.data["meas"].samples.iter())
             .cloned()
             .collect(),
         num_bits,
-    ));
-    res
+    })
+}
+
+#[derive(Debug)]
+pub struct ExpectationValues(pub Vec<f64>);
+
+pub async fn get_estimator_job_results(
+    service: &Service,
+    job: &Job,
+) -> Result<ExpectationValues, ServiceError> {
+    let crn = job.instance.crn.to_str().unwrap();
+    let details = get_estimator_job_results_jid(
+        &service.quantum_config,
+        crn,
+        &job.response.id,
+        Some("2025-06-01"),
+    )
+    .await?;
+    log_debug(&format!("get_job_result response: {:?}", details));
+    Ok(ExpectationValues(
+        details.results.iter().map(|x| x.data["evs"]).collect(),
+    ))
 }
 
 pub async fn get_job_status(service: &Service, job: &Job) -> Result<JobStatus, ServiceError> {

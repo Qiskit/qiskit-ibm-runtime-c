@@ -62,13 +62,13 @@ impl<'a> Iterator for CircuitInstructions<'a> {
                 std::slice::from_raw_parts(self.inst.params, self.inst.num_params as usize);
             let c_name: Box<CStr> = Box::from(CStr::from_ptr(self.inst.name));
             let name = c_name.into_c_string().into_string().unwrap();
-            let out = Some(CircuitInstruction {
+
+            Some(CircuitInstruction {
                 name,
                 qubits,
                 clbits,
                 params,
-            });
-            out
+            })
         };
         self.index += 1;
         out

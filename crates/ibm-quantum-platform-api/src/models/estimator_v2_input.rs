@@ -16,7 +16,7 @@ use serde::{Deserialize, Serialize};
 pub struct EstimatorV2Input {
     /// Primitive Unit Blocs of data. Each PUB is of the form (Circuit, Observables, Parameters, Precision) where the circuit and observables are required, parameters should be passed only for parametrized circuits, and precision is optional
     #[serde(rename = "pubs")]
-    pub pubs: Vec<Vec<serde_json::Value>>,
+    pub pubs: Vec<Vec<models::EstimatorV2InputPubsInner>>,
     #[serde(rename = "options", skip_serializing_if = "Option::is_none")]
     pub options: Option<Box<models::EstimatorV2InputOptions>>,
     /// How much resilience to build against errors
@@ -40,7 +40,7 @@ pub struct EstimatorV2Input {
 
 impl EstimatorV2Input {
     /// The input for an EstimatorV2 API call
-    pub fn new(pubs: Vec<Vec<serde_json::Value>>) -> EstimatorV2Input {
+    pub fn new(pubs: Vec<Vec<models::EstimatorV2InputPubsInner>>) -> EstimatorV2Input {
         EstimatorV2Input {
             pubs,
             options: None,

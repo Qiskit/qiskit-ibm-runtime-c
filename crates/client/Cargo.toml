@@ -17,6 +17,8 @@ serde_json.workspace = true
 serde.workspace = true
 reqwest.workspace = true
 tokio.workspace = true
+indexmap.workspace = true
+foldhash.workspace = true
 
 ibm-quantum-platform-api.workspace = true
 ibmcloud-iam-api.workspace = true
