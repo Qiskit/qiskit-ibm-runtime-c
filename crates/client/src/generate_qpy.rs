@@ -41,7 +41,7 @@ pub fn generate_qpy_payload(circuit: &qiskit_circuit::Circuit) -> BinResult<Vec<
     .write(&mut writer)?;
     qpy_formats::ProgramType { type_key: b'q' }.write(&mut writer)?;
     let empty_json = "{}";
-    let registers = if circuit.num_clbits() == 0 {
+    let registers = if circuit.num_clbits() != 0 {
         vec![qpy_formats::RegisterV4Pack {
             register_type: b'c',
             standalone: true as u8,
