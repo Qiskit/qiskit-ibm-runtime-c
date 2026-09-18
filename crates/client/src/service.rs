@@ -597,7 +597,10 @@ pub async fn get_job_details(service: &Service, job: &Job) -> Result<JobDetails,
 }
 
 #[derive(Debug)]
-pub struct Samples(pub Vec<String>);
+pub struct Samples {
+    pub samples: Vec<String>,
+    pub num_bits: u32,
+}
 
 pub async fn get_sampler_job_results(
     service: &Service,
@@ -612,15 +615,26 @@ pub async fn get_sampler_job_results(
     )
     .await?;
     log_debug(&format!("get_job_result response: {:?}", details));
-    let res = Ok(Samples(
-        details
+    // TODO: Sampler submission is currently single-PUB -- see
+    // generate_job_params::generate_single_pubs_payload -- so
+    // `results` has at most one entry, whose bit width applies to
+    // every sample. If multi-PUB submission is added, `num_bits`
+    // becomes per-PUB and the flattening below silently merges
+    // samples from different circuits.
+    let num_bits = details
+        .results
+        .first()
+        .map(|x| x.data["meas"].num_bits)
+        .unwrap_or(0);
+    Ok(Samples {
+        samples: details
             .results
             .iter()
             .flat_map(|x| x.data["meas"].samples.iter())
             .cloned()
             .collect(),
-    ));
-    res
+        num_bits,
+    })
 }
 
 #[derive(Debug)]

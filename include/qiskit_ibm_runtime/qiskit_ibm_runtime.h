@@ -204,6 +204,15 @@ extern size_t qkrt_samples_num_samples(const Samples *samples);
 extern size_t qkrt_expectation_values_num_evs(ExpectationValues *evs);
 
 /**
+ * Get the number of classical bits in each sample.
+ *
+ * @param samples The handle of the samples.
+ *
+ * @return The number of bits per sample.
+ */
+extern uint32_t qkrt_samples_num_bits(const Samples *samples);
+
+/**
  * Get a specific sample by index.
  *
  * @param samples The handle of the samples.
