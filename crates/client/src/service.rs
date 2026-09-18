@@ -615,6 +615,12 @@ pub async fn get_sampler_job_results(
     )
     .await?;
     log_debug(&format!("get_job_result response: {:?}", details));
+    // TODO: Sampler submission is currently single-PUB -- see
+    // generate_job_params::generate_single_pubs_payload -- so
+    // `results` has at most one entry, whose bit width applies to
+    // every sample. If multi-PUB submission is added, `num_bits`
+    // becomes per-PUB and the flattening below silently merges
+    // samples from different circuits.
     let num_bits = details
         .results
         .first()
