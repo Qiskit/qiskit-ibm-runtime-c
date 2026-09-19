@@ -31,6 +31,10 @@ find_program(MAKE_EXECUTABLE NAMES gmake make REQUIRED)
 # ---- Paths / names -----------------------------------------------------------
 set(QISKIT_REPO https://github.com/Qiskit/qiskit.git)
 
+# The Qiskit release to build the C API from. The checked-in FFI bindings track one C ABI, so this
+# is pinned to a release rather than following a branch. Qiskit 2.5 is the minimum supported.
+set(QISKIT_VERSION 2.5.2 CACHE STRING "Git tag of the Qiskit release to build against")
+
 set(QISKIT_SRCDIR ${CMAKE_BINARY_DIR}/qiskit_srcdir)
 set(QISKIT_INCDIR ${QISKIT_SRCDIR}/dist/c/include)
 set(QISKIT_LIBPATH
@@ -60,10 +64,8 @@ include(ExternalProject)
 
 ExternalProject_Add(qiskit_src
         GIT_REPOSITORY    ${QISKIT_REPO}
-        GIT_TAG           main
+        GIT_TAG           ${QISKIT_VERSION}
         GIT_SHALLOW       1
-        UPDATE_COMMAND    ${GIT_EXECUTABLE} fetch --depth 1 origin main
-        COMMAND ${GIT_EXECUTABLE} reset --hard origin/main
         CONFIGURE_COMMAND ""
         BUILD_IN_SOURCE   1
         BUILD_COMMAND     ${MAKE_EXECUTABLE} c
@@ -128,6 +130,11 @@ add_executable(test_qpy tests/test_qpy.c)
 target_include_directories(test_qpy PRIVATE ${PROJECT_INCLUDEDIR})
 target_link_libraries(test_qpy PRIVATE qiskit qiskit_ibm_runtime)
 add_test(NAME qpy COMMAND test_qpy)
+
+add_executable(test_qpy_params tests/test_qpy_params.c)
+target_include_directories(test_qpy_params PRIVATE ${PROJECT_INCLUDEDIR})
+target_link_libraries(test_qpy_params PRIVATE qiskit qiskit_ibm_runtime)
+add_test(NAME qpy_params COMMAND test_qpy_params)
 
 # ---- Notes -------------------------------------------------------------------
 message(STATUS "CMake build type: ${CMAKE_BUILD_TYPE}")
