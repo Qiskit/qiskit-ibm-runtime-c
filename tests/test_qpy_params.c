@@ -21,21 +21,8 @@ extern void generate_qpy(QkCircuit *circuit, char *filename);
 
 #define QPY_FILENAME "test_params.qpy"
 
-// Encode `value` as the 8 bytes QPY stores for an INSTRUCTION_PARAM double, least significant
-// byte first. Built from the bit pattern, so the host's own byte order does not matter.
-static void encode_double(double value, unsigned char out[8]) {
-    uint64_t bits;
-    memcpy(&bits, &value, sizeof(bits));
-    for (int i = 0; i < 8; i++) {
-        out[i] = (unsigned char)((bits >> (8 * i)) & 0xFF);
-    }
-}
-
 static int contains(const unsigned char *haystack, size_t haystack_len,
                     const unsigned char *needle, size_t needle_len) {
-    if (haystack_len < needle_len) {
-        return 0;
-    }
     for (size_t i = 0; i + needle_len <= haystack_len; i++) {
         if (memcmp(haystack + i, needle, needle_len) == 0) {
             return 1;
@@ -44,16 +31,20 @@ static int contains(const unsigned char *haystack, size_t haystack_len,
     return 0;
 }
 
-// Report whether `angle` reached the QPY payload, returning the number of failures found.
+// Report whether `angle` reached the QPY payload, returning 1 if it did not.
 static int check_angle(const unsigned char *payload, size_t payload_len, double angle) {
+    uint64_t bits;
+    memcpy(&bits, &angle, sizeof(bits));
     unsigned char encoded[8];
-    encode_double(angle, encoded);
-
-    if (!contains(payload, payload_len, encoded, sizeof(encoded))) {
-        printf("FAIL: angle %g is missing from the QPY payload\n", angle);
-        return 1;
+    for (int i = 0; i < 8; i++) {
+        encoded[i] = (unsigned char)((bits >> (8 * i)) & 0xFF);
     }
-    return 0;
+
+    if (contains(payload, payload_len, encoded, sizeof(encoded))) {
+        return 0;
+    }
+    printf("FAIL: angle %g is missing from the QPY payload\n", angle);
+    return 1;
 }
 
 int main(void) {
@@ -61,12 +52,8 @@ int main(void) {
     const double rx_angle = 0.3;
 
     QkCircuit *qc = qk_circuit_new(2, 2);
-    uint32_t rz_qubits[1] = {0};
-    double rz_params[1] = {rz_angle};
-    qk_circuit_gate(qc, QkGate_RZ, rz_qubits, rz_params);
-    uint32_t rx_qubits[1] = {1};
-    double rx_params[1] = {rx_angle};
-    qk_circuit_gate(qc, QkGate_RX, rx_qubits, rx_params);
+    qk_circuit_gate(qc, QkGate_RZ, (uint32_t[]){0}, (double[]){rz_angle});
+    qk_circuit_gate(qc, QkGate_RX, (uint32_t[]){1}, (double[]){rx_angle});
     qk_circuit_measure(qc, 0, 0);
     qk_circuit_measure(qc, 1, 1);
 
@@ -88,9 +75,7 @@ int main(void) {
     }
 
     int failures = check_angle(payload, read, rz_angle) + check_angle(payload, read, rx_angle);
-
     if (failures > 0) {
-        printf("%d check(s) failed\n", failures);
         return 1;
     }
     printf("rz(%g) and rx(%g) both round-trip through QPY\n", rz_angle, rx_angle);
