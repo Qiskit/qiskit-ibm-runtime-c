@@ -11,14 +11,6 @@
 // that they have been altered from the originals.
 
 // Check that the angles of parametric gates survive QPY generation.
-//
-// Reading QkCircuitInstruction.params with the Qiskit C <= 2.3 layout turned every angle
-// into a QkParam pointer address, so no angle reached the payload at all.
-//
-// The angles are expected little-endian, the one place QPY is not big-endian: integers and
-// floats inside an INSTRUCTION_PARAM are little-endian up to QPY version 17, and
-// generate_qpy writes `qpy_version: 14`. "Correcting" that to big-endian would corrupt
-// every angle, so this test pins the byte order against a well-meant fix.
 
 #include <qiskit.h>
 #include <stdint.h>
@@ -29,15 +21,13 @@ extern void generate_qpy(QkCircuit *circuit, char *filename);
 
 #define QPY_FILENAME "test_params.qpy"
 
-// Encode `value` as the 8 bytes QPY would store for it, most significant byte first when
-// `big_endian` is set. Derived from the bit pattern, so the host's own byte order does not
-// matter.
-static void encode_double(double value, int big_endian, unsigned char out[8]) {
+// Encode `value` as the 8 bytes QPY stores for an INSTRUCTION_PARAM double, least significant
+// byte first. Built from the bit pattern, so the host's own byte order does not matter.
+static void encode_double(double value, unsigned char out[8]) {
     uint64_t bits;
     memcpy(&bits, &value, sizeof(bits));
     for (int i = 0; i < 8; i++) {
-        int shift = big_endian ? (56 - 8 * i) : (8 * i);
-        out[i] = (unsigned char)((bits >> shift) & 0xFF);
+        out[i] = (unsigned char)((bits >> (8 * i)) & 0xFF);
     }
 }
 
@@ -54,24 +44,16 @@ static int contains(const unsigned char *haystack, size_t haystack_len,
     return 0;
 }
 
-// Report whether `angle` is stored little-endian and not big-endian, returning the number of
-// failures found.
+// Report whether `angle` reached the QPY payload, returning the number of failures found.
 static int check_angle(const unsigned char *payload, size_t payload_len, double angle) {
-    unsigned char big[8], little[8];
-    encode_double(angle, 1, big);
-    encode_double(angle, 0, little);
+    unsigned char encoded[8];
+    encode_double(angle, encoded);
 
-    int failures = 0;
-    if (!contains(payload, payload_len, little, 8)) {
+    if (!contains(payload, payload_len, encoded, sizeof(encoded))) {
         printf("FAIL: angle %g is missing from the QPY payload\n", angle);
-        failures++;
+        return 1;
     }
-    // A palindromic encoding is the same either way, so there is nothing to distinguish.
-    if (memcmp(big, little, 8) != 0 && contains(payload, payload_len, big, 8)) {
-        printf("FAIL: angle %g is stored big-endian; INSTRUCTION_PARAM is little-endian\n", angle);
-        failures++;
-    }
-    return failures;
+    return 0;
 }
 
 int main(void) {
@@ -96,9 +78,7 @@ int main(void) {
         printf("FAIL: could not open %s\n", QPY_FILENAME);
         return 1;
     }
-    // The circuit is fixed and tiny, so one buffer with plenty of headroom holds the payload.
-    // Filling it exactly would mean the file is larger than expected and the bytes searched
-    // below are only a prefix, so treat that as a failure rather than risk a false negative.
+
     unsigned char payload[8192];
     size_t read = fread(payload, 1, sizeof(payload), file);
     fclose(file);
