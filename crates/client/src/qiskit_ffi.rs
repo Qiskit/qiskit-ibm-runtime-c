@@ -89,7 +89,7 @@ pub struct QkCircuitInstruction {
     pub qubits: *mut u32,
     #[doc = " A pointer to an array of clbit indices this instruction operates on."]
     pub clbits: *mut u32,
-    #[doc = " A pointer to an array of ``QkParam`` pointers, one per parameter of this instruction.\n\n Each entry must be read with ``qk_param_as_real``; the pointers themselves are not values."]
+    #[doc = " A pointer to an array of ``QkParam`` pointers, one per parameter of this instruction."]
     pub params: *mut *mut QkParam,
     #[doc = " The number of qubits for this instruction."]
     pub num_qubits: u32,
