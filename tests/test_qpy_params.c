@@ -33,6 +33,9 @@ static int contains(const unsigned char *haystack, size_t haystack_len,
 
 // Report whether `angle` reached the QPY payload, returning 1 if it did not.
 static int check_angle(const unsigned char *payload, size_t payload_len, double angle) {
+    // QPY stores instruction parameters little-endian, so build the expected bytes
+    // from the IEEE-754 bit pattern rather than memcpy'ing the double -- that
+    // keeps this check correct on a big-endian host, too.
     uint64_t bits;
     memcpy(&bits, &angle, sizeof(bits));
     unsigned char encoded[8];
