@@ -330,7 +330,7 @@ pub unsafe extern "C" fn qkrt_sampler_job_results(
 #[no_mangle]
 pub unsafe extern "C" fn qkrt_samples_to_counts(samples: *const Samples) -> *mut Counts {
     let samples = unsafe { const_ptr_as_ref(samples) };
-    let histogram = Counts::from_samples(&samples.0);
+    let histogram = Counts::from_samples(&samples.samples);
     Box::into_raw(Box::new(histogram))
 }
 
@@ -432,7 +432,12 @@ pub unsafe extern "C" fn qkrt_counts_display(counts: *const Counts) {
 
 #[no_mangle]
 pub unsafe extern "C" fn qkrt_samples_num_samples(samples: *const Samples) -> usize {
-    unsafe { const_ptr_as_ref(samples) }.0.len()
+    unsafe { const_ptr_as_ref(samples) }.samples.len()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_samples_num_bits(samples: *const Samples) -> u32 {
+    unsafe { const_ptr_as_ref(samples) }.num_bits
 }
 
 #[no_mangle]
@@ -446,7 +451,7 @@ pub unsafe extern "C" fn qkrt_samples_get_sample(
     index: usize,
 ) -> *mut c_char {
     let samples = unsafe { const_ptr_as_ref(samples) };
-    let sample: &String = &samples.0[index];
+    let sample: &String = &samples.samples[index];
     let c_string = CString::new(sample.as_bytes()).unwrap();
     c_string.into_raw()
 }
