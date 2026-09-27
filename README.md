@@ -52,6 +52,45 @@ To run all tests, you can run the following command from within the build tree,
 ctest
 ```
 
+#### Running Sampler Examples
+
+Before running the sampler examples, you must first set your account credentials.
+* `token`: Your IBM Quantum account token
+* `instance`: Your IBM Quantum account instance
+* `channel`: Your IBM Quantum account channel (optional)
+
+##### Configuration Methods (in priority order)
+
+1. **Environment Variables** (recommended)
+   ```bash
+   export QISKIT_IBM_TOKEN="your_token"
+   export QISKIT_IBM_INSTANCE="your_instance"
+   export QISKIT_IBM_CHANNEL="ibm_quantum"  # optional
+   ```
+
+2. **Configuration File for local development**
+
+Configuration File to be Created at `$HOME/.qiskit/qiskit-ibm.json` with IBM Quantum account credentials and the desired channel, at your home root directory.
+
+Example of qiskit-ibm.json file:
+
+```json
+{
+  "default-ibm-quantum-platform": {
+    "token": "YOUR_IBM_QUANTUM_TOKEN",
+    "instance": "YOUR_INSTANCE_CRN",
+    "channel": "ibm_quantum"
+  }
+}
+```
+
+More details how to set your account can be found [here](https://github.com/Qiskit/qiskit-ibm-runtime?tab=readme-ov-file#save-your-account-on-disk)
+
+##### Running the Examples
+
+After configuring your account, execute the sampler examples as `./test_ghz_sampler_run`
+
+
 #### License
 
 This software is licensed under the Apache 2.0 license.
