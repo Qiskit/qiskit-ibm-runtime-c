@@ -18,7 +18,7 @@ pub struct CircuitInstruction<'a> {
     pub name: String,
     pub qubits: &'a [u32],
     pub clbits: &'a [u32],
-    pub params: &'a [f64],
+    pub params: Vec<f64>,
 }
 
 pub struct CircuitInstructions<'a> {
@@ -58,8 +58,11 @@ impl<'a> Iterator for CircuitInstructions<'a> {
                 std::slice::from_raw_parts(self.inst.qubits, self.inst.num_qubits as usize);
             let clbits =
                 std::slice::from_raw_parts(self.inst.clbits, self.inst.num_clbits as usize);
-            let params =
-                std::slice::from_raw_parts(self.inst.params, self.inst.num_params as usize);
+            let params: Vec<f64> =
+                std::slice::from_raw_parts(self.inst.params, self.inst.num_params as usize)
+                    .iter()
+                    .map(|param| qiskit_ffi::qk_param_as_real(*param))
+                    .collect();
             let c_name: Box<CStr> = Box::from(CStr::from_ptr(self.inst.name));
             let name = c_name.into_c_string().into_string().unwrap();
 

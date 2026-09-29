@@ -50,6 +50,11 @@ pub struct QkObs {
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct QkParam {
+    _unused: [u8; 0],
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct QkOpCount {
     pub name: *const ::std::os::raw::c_char,
     pub count: usize,
@@ -84,8 +89,8 @@ pub struct QkCircuitInstruction {
     pub qubits: *mut u32,
     #[doc = " A pointer to an array of clbit indices this instruction operates on."]
     pub clbits: *mut u32,
-    #[doc = " A pointer to an array of parameter values for this instruction."]
-    pub params: *mut f64,
+    #[doc = " A pointer to an array of ``QkParam`` pointers, one per parameter of this instruction."]
+    pub params: *mut *mut QkParam,
     #[doc = " The number of qubits for this instruction."]
     pub num_qubits: u32,
     #[doc = " The number of clbits for this instruction."]
@@ -207,6 +212,10 @@ unsafe extern "C" {
 unsafe extern "C" {
     #[doc = " @ingroup QkCircuit\n Free a circuit instruction object\n\n @param inst The instruction to free\n\n # Safety\n Behavior is undefined if ``inst`` is not an object returned by ``qk_circuit_get_instruction``."]
     pub fn qk_circuit_instruction_clear(inst: *mut QkCircuitInstruction);
+}
+unsafe extern "C" {
+    #[doc = " @ingroup QkParam\n Attempt casting the ``QkParam`` as ``double``.\n\n If the parameter could not be cast to a ``double``, because there were unbound parameters,\n ``NAN`` is returned. Note that for ``QkParam`` representing complex values the real part is\n returned.\n\n @param param A pointer to the ``QkParam`` to evaluate.\n\n @return The value, if casting was successful, otherwise ``NAN``.\n\n # Safety\n\n The behavior is undefined if ``param`` is not a valid, non-null pointer to a ``QkParam``."]
+    pub fn qk_param_as_real(param: *const QkParam) -> f64;
 }
 unsafe extern "C" {
     #[doc = " @ingroup QkCircuit\n Free a circuit op count list.\n\n @param op_counts The returned op count list from ``qk_circuit_count_ops``.\n\n # Safety\n\n Behavior is undefined if ``op_counts`` is not the object returned by ``qk_circuit_count_ops``."]

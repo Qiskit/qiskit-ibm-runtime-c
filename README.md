@@ -12,8 +12,8 @@ but expose that to C.
 > [!WARNING]
 > This library is an early prototype and is still under active development.
 > There are currently no backwards compatibility guarantees as the library
-> is developed. This library currently only supports the Qiskit minor versions
-> 2.2, 2.3, and 2.4.
+> is developed. This library currently only supports the Qiskit minor version
+> 2.5.
 
 
 ## Getting Started
