@@ -231,11 +231,11 @@ impl<T: Debug> From<ibmcloud_iam_api::apis::Error<T>> for ServiceError {
     }
 }
 
-fn get_account_config(filename: Option<&str>, name: Option<&str>) -> AccountEntry {
+fn get_account_config(filename: Option<&str>, name: Option<&str>) -> Option<AccountEntry> {
     let filename = match filename {
         Some(path) => path.to_string(),
         None => {
-            let home = std::env::var("HOME").unwrap();
+            let home = std::env::var("HOME").ok()?;
             format!("{}/.qiskit/qiskit-ibm.json", home)
         }
     };
@@ -243,15 +243,15 @@ fn get_account_config(filename: Option<&str>, name: Option<&str>) -> AccountEntr
 
     let file = File::open(file_path).unwrap();
     let reader = BufReader::new(file);
-    let accounts: HashMap<String, AccountEntry> = serde_json::from_reader(reader).unwrap();
-    match name {
+    let accounts: HashMap<String, AccountEntry> = serde_json::from_reader(reader).ok()?;
+    Some(match name {
         Some(name) => accounts[name].clone(),
         None => accounts
             .get("default")
             .or_else(|| accounts.get("default-ibm-quantum-platform"))
             .unwrap_or_else(|| &accounts["default-ibm-cloud"])
             .clone(),
-    }
+    })
 }
 
 #[derive(Clone, Debug)]
@@ -287,7 +287,7 @@ impl Service {
 
 #[derive(Clone, Debug)]
 pub struct Account {
-    pub config: AccountEntry,
+    pub config: Option<AccountEntry>,
     token: TokenResponse,
     iam_config: Configuration,
     user_config: Option<AccountConfig>,
@@ -309,7 +309,8 @@ pub async fn get_account_from_config(
     filename: Option<&str>,
     name: Option<&str>,
 ) -> Result<Account, ServiceError> {
-    let config = get_account_config(filename, name);
+    let config = get_account_config(filename, name)
+        .expect("Specified configuration filename or name does not exist");
     let iam_config = Configuration {
         base_path: "https://iam.cloud.ibm.com".to_owned(),
         user_agent: Some("qiskit-ibm-runtime-rs/0.0.1".to_owned()),
@@ -331,7 +332,7 @@ pub async fn get_account_from_config(
         &response
     ));
     Ok(Account {
-        config,
+        config: Some(config),
         token: response,
         iam_config,
         user_config: None,
@@ -373,10 +374,13 @@ pub async fn get_account(
     let response = get_token_api_key(
         &iam_config,
         "urn:ibm:params:oauth:grant-type:apikey",
-        config
-            .token
-            .as_deref()
-            .unwrap_or(file_config.token.as_str()),
+        config.token.as_deref().unwrap_or(
+            file_config
+                .as_ref()
+                .expect("Token not specified in config and no valid config file found")
+                .token
+                .as_str(),
+        ),
         None,
     )
     .await?;

@@ -101,7 +101,12 @@ pub unsafe extern "C" fn qkrt_service_new(out: *mut *mut Service) -> ExitCode {
         .unwrap();
     let account = check_result!(rt.block_on(get_account_from_config(None, None)));
     let mut instances = check_result!(rt.block_on(list_instances(&account)));
-    if let Some(instance) = &account.config.instance {
+    if let Some(instance) = &account
+        .config
+        .as_ref()
+        .map(|x| x.instance.clone())
+        .flatten()
+    {
         // Filter-out any instance that doesn't match the user's config.
         instances.retain(|x| x.crn.to_str().unwrap() == instance)
     }
@@ -152,12 +157,7 @@ pub unsafe extern "C" fn qkrt_service_new_from_config(
     let iqp_url = if config.iqp_url.is_null() {
         None
     } else {
-        Some(
-            CStr::from_ptr(config.iqp_url)
-                .to_str()
-                .unwrap()
-                .to_owned(),
-        )
+        Some(CStr::from_ptr(config.iqp_url).to_str().unwrap().to_owned())
     };
     let global_search_url = if config.global_search_url.is_null() {
         None
@@ -206,7 +206,12 @@ pub unsafe extern "C" fn qkrt_service_new_from_config(
         .unwrap();
     let account = check_result!(rt.block_on(get_account(account_config, filename, account_name)));
     let mut instances = check_result!(rt.block_on(list_instances(&account)));
-    if let Some(instance) = &account.config.instance {
+    if let Some(instance) = &account
+        .config
+        .as_ref()
+        .map(|x| x.instance.clone())
+        .flatten()
+    {
         // Filter-out any instance that doesn't match the user's config.
         instances.retain(|x| x.crn.to_str().unwrap() == instance);
     }
