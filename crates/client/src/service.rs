@@ -374,13 +374,13 @@ pub async fn get_account(
     let response = get_token_api_key(
         &iam_config,
         "urn:ibm:params:oauth:grant-type:apikey",
-        config.token.as_deref().unwrap_or(
+        config.token.as_deref().unwrap_or_else(|| {
             file_config
                 .as_ref()
                 .expect("Token not specified in config and no valid config file found")
                 .token
-                .as_str(),
-        ),
+                .as_str()
+        }),
         None,
     )
     .await?;
