@@ -401,7 +401,10 @@ pub async fn list_instances(account: &Account) -> Result<Vec<Instance>, ServiceE
     });
     if let Some(ref user_config) = account.user_config {
         if let Some(ref base_path) = user_config.global_search_url {
-            config.base_path = base_path.clone()
+            config.base_path = base_path.clone();
+        }
+        if let Some(ref user_agent) = user_config.user_agent {
+            config.user_agent = Some(user_agent.clone());
         }
     }
     let body = ibmcloud_global_search_api::models::SearchRequest::FirstCall(Box::new(
