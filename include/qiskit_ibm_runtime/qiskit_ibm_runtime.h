@@ -85,7 +85,7 @@ typedef struct {
  * config.user_agent = "CustomClient_0.2";
  * ```
  */
-extern QkrtServiceConfig qkrt_default_service_config();
+extern QkrtServiceConfig qkrt_default_service_config(void);
 
 
 /**
