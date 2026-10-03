@@ -15,7 +15,7 @@
 
 #include <qiskit.h>
 
-extern void generate_qpy(QkCircuit *circuit, char *filename);
+extern void generate_qpy(const QkCircuit *circuit, const char *filename);
 
 int main(int argc, char* arv[]) {
     QkCircuit *qc = qk_circuit_new(200, 200);

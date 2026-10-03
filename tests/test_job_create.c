@@ -18,11 +18,11 @@
 #include <stdio.h>
 #include <string.h>
 
-extern void generate_qpy(QkCircuit *circuit, char *filename);
+extern void generate_qpy(const QkCircuit *circuit, const char *filename);
 
-extern void qkrt_sampler_job_write_payload(QkCircuit *circuit, int32_t shots,
-                                           char *backend, char *runtime,
-                                           char *filename);
+extern void qkrt_sampler_job_write_payload(const QkCircuit *circuit, int32_t shots,
+                                           const char *backend, const char *runtime,
+                                           const char *filename);
 
 int main(int argc, char *arv[]) {
     QkCircuit *qc = qk_circuit_new(100, 100);
