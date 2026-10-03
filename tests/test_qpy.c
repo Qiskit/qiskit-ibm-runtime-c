@@ -15,6 +15,13 @@
 
 #include <qiskit.h>
 
+extern int32_t qkrt_sampler_job_write_payload(QkCircuit *circuit, int32_t shots,
+                                              char *backend,
+                                              char *runtime,
+                                              char *filename,
+                                              const char *const *tags);
+
+
 extern void generate_qpy(QkCircuit *circuit, char *filename);
 
 int main(int argc, char* arv[]) {
@@ -28,5 +35,7 @@ int main(int argc, char* arv[]) {
     for(int i = 0; i < 200; i++) {
         qk_circuit_measure(qc, i, i);
     }
+    static const char *const tags[] = {"tag1", "tag2", NULL};
+    qkrt_sampler_job_write_payload(qc, 1024, "ibm_backend_name", "the_runtime", "test_tags.qpy", tags);
     generate_qpy(qc, "test.qpy");
 }
