@@ -11,7 +11,11 @@
 // that they have been altered from the originals.
 
 use crate::qiskit_ffi;
+use std::ffi::c_char;
 use std::ffi::CStr;
+use std::mem::MaybeUninit;
+
+const QPY_VERSION: u8 = 17;
 
 #[derive(Debug)]
 pub struct CircuitInstruction<'a> {
@@ -78,6 +82,14 @@ impl<'a> Iterator for CircuitInstructions<'a> {
     }
 }
 
+pub struct QpyError<'a>(pub &'a CStr);
+
+impl<'a> std::fmt::Display for QpyError<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0.to_string_lossy())
+    }
+}
+
 pub struct Circuit(pub *mut qiskit_ffi::QkCircuit);
 
 impl Circuit {
@@ -101,7 +113,7 @@ impl Circuit {
             len: num_inst,
             circuit: self,
             inst: qiskit_ffi::QkCircuitInstruction {
-                name: std::ptr::null(),
+                name: std::ptr::null_mut(),
                 qubits: std::ptr::null_mut(),
                 clbits: std::ptr::null_mut(),
                 params: std::ptr::null_mut(),
@@ -110,6 +122,51 @@ impl Circuit {
                 num_params: u32::MAX,
             },
             index: 0,
+        }
+    }
+
+    pub fn generate_qpy(&self) -> Result<QpyBuffer, QpyError<'_>> {
+        let mut buf: MaybeUninit<*mut u8> = MaybeUninit::uninit();
+        let mut error_string: MaybeUninit<*mut c_char> = MaybeUninit::uninit();
+        let mut size: usize = 0;
+        let status = unsafe {
+            qiskit_ffi::qk_qpy_dump_buffer_with_version(
+                &(self.0 as *const qiskit_ffi::QkCircuit),
+                1, // Num circuits
+                buf.as_mut_ptr(),
+                &mut size,
+                QPY_VERSION,
+                error_string.as_mut_ptr(),
+            )
+        };
+        if status == qiskit_ffi::QkExitCode_QkExitCode_Success {
+            Ok(QpyBuffer {
+                ptr: unsafe { buf.assume_init() },
+                size,
+            })
+        } else {
+            Err(QpyError(unsafe {
+                CStr::from_ptr(error_string.assume_init())
+            }))
+        }
+    }
+}
+
+pub struct QpyBuffer {
+    ptr: *mut u8,
+    size: usize,
+}
+
+impl QpyBuffer {
+    pub fn as_slice(&self) -> &[u8] {
+        unsafe { std::slice::from_raw_parts(self.ptr, self.size) }
+    }
+}
+
+impl Drop for QpyBuffer {
+    fn drop(&mut self) {
+        unsafe {
+            qiskit_ffi::qk_qpy_free_buffer(self.ptr, self.size);
         }
     }
 }

@@ -32,8 +32,8 @@ find_program(MAKE_EXECUTABLE NAMES gmake make REQUIRED)
 set(QISKIT_REPO https://github.com/Qiskit/qiskit.git)
 
 # The Qiskit release to build the C API from. The checked-in FFI bindings track one C ABI, so this
-# is pinned to a release rather than following a branch. Qiskit 2.5 is the minimum supported.
-set(QISKIT_VERSION 2.5.2 CACHE STRING "Git tag of the Qiskit release to build against")
+# is pinned to a release rather than following a branch. Qiskit 2.6 is the minimum supported.
+set(QISKIT_VERSION 2.6.1 CACHE STRING "Git tag of the Qiskit release to build against")
 
 set(QISKIT_SRCDIR ${CMAKE_BINARY_DIR}/qiskit_srcdir)
 set(QISKIT_INCDIR ${QISKIT_SRCDIR}/dist/c/include)

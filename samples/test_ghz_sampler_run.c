@@ -20,7 +20,9 @@
 
 int main(int argc, char *arv[]) {
     // Build a 5 qubit GHZ state
-    QkCircuit *qc = qk_circuit_new(5, 5);
+    QkClassicalRegister *cr = qk_classical_register_new(5, "meas");
+    QkCircuit *qc = qk_circuit_new(5, 0);
+    qk_circuit_add_classical_register(qc, cr);
     uint32_t h_qargs[1] = {0, };
     qk_circuit_gate(qc, QkGate_H, h_qargs, NULL);
 
@@ -124,4 +126,5 @@ int main(int argc, char *arv[]) {
     qkrt_service_free(service);
     cleanup:
     qk_circuit_free(qc);
+    qk_classical_register_free(cr);
 }
