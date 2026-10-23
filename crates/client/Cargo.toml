@@ -23,4 +23,8 @@ foldhash.workspace = true
 ibm-quantum-platform-api.workspace = true
 ibmcloud-iam-api.workspace = true
 ibmcloud-global-search-api.workspace = true
-chrono = "0.4"
+
+[dependencies.chrono]
+version = "0.4"
+default-features = false
+features = ["std", "clock"]
