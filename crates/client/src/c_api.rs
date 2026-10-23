@@ -99,8 +99,8 @@ pub unsafe extern "C" fn qkrt_service_new(out: *mut *mut Service) -> ExitCode {
         .enable_all()
         .build()
         .unwrap();
-    let account = check_result!(rt.block_on(get_account_from_config(None, None)));
-    let mut instances = check_result!(rt.block_on(list_instances(&account)));
+    let mut account = check_result!(rt.block_on(get_account_from_config(None, None)));
+    let mut instances = check_result!(rt.block_on(list_instances(&mut account)));
     if let Some(instance) = &account
         .config
         .as_ref()
@@ -110,7 +110,8 @@ pub unsafe extern "C" fn qkrt_service_new(out: *mut *mut Service) -> ExitCode {
         // Filter-out any instance that doesn't match the user's config.
         instances.retain(|x| x.crn.to_str().unwrap() == instance)
     }
-    *out = Box::into_raw(Box::new(Service::new(account, instances, None)));
+    let service = check_result!(rt.block_on(Service::new(account, instances, None)));
+    *out = Box::into_raw(Box::new(service));
     ExitCode::Success
 }
 
@@ -204,8 +205,9 @@ pub unsafe extern "C" fn qkrt_service_new_from_config(
         .enable_all()
         .build()
         .unwrap();
-    let account = check_result!(rt.block_on(get_account(account_config, filename, account_name)));
-    let mut instances = check_result!(rt.block_on(list_instances(&account)));
+    let mut account =
+        check_result!(rt.block_on(get_account(account_config, filename, account_name)));
+    let mut instances = check_result!(rt.block_on(list_instances(&mut account)));
     if let Some(instance) = &account
         .config
         .as_ref()
@@ -215,7 +217,8 @@ pub unsafe extern "C" fn qkrt_service_new_from_config(
         // Filter-out any instance that doesn't match the user's config.
         instances.retain(|x| x.crn.to_str().unwrap() == instance);
     }
-    *out = Box::into_raw(Box::new(Service::new(account, instances, user_agent)));
+    let service = check_result!(rt.block_on(Service::new(account, instances, user_agent)));
+    *out = Box::into_raw(Box::new(service));
 
     ExitCode::Success
 }
@@ -648,9 +651,8 @@ pub extern "C" fn get_access_token() {
         .build()
         .unwrap();
 
-    let account = rt.block_on(get_account_from_config(None, None)).unwrap();
-    println!("run");
-    println!("token: {:?}", account.get_access_token());
+    let mut account = rt.block_on(get_account_from_config(None, None)).unwrap();
+    println!("token: {:?}", rt.block_on(account.get_access_token()));
 }
 
 #[cfg(test)]
