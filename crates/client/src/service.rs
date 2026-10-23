@@ -290,6 +290,14 @@ impl Service {
             quantum_config,
         })
     }
+
+    async fn update_token(&mut self) -> Result<(), ServiceError> {
+        self.quantum_config.api_key = Some(ibm_quantum_platform_api::apis::configuration::ApiKey {
+            key: self.account.get_access_token().await?.unwrap().to_string(),
+            prefix: Some("Bearer".to_string()),
+        });
+        Ok(())
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -501,10 +509,11 @@ pub async fn list_instances(account: &mut Account) -> Result<Vec<Instance>, Serv
         .collect())
 }
 
-pub async fn get_backend(service: &Service, backend: &Backend) -> crate::qiskit_target::Target {
+pub async fn get_backend(service: &mut Service, backend: &Backend) -> crate::qiskit_target::Target {
     let name = backend.response.name.clone();
     let crn = backend.instance.crn.to_str().unwrap();
 
+    let _ = service.update_token().await;
     let backend_configuration = get_backend_configuration(
         &service.quantum_config,
         name.as_str(),
@@ -633,13 +642,14 @@ pub async fn get_backend(service: &Service, backend: &Backend) -> crate::qiskit_
 }
 
 pub async fn submit_estimator_job(
-    service: &Service,
+    service: &mut Service,
     backend: &Backend,
     circuit: &crate::qiskit_circuit::Circuit,
     observable: &crate::qiskit_observable::SparseObservable,
     runtime: Option<String>,
     tags: Option<Vec<String>>,
 ) -> Result<Job, ServiceError> {
+    let _ = service.update_token();
     let crn = backend.instance.crn.to_str().unwrap();
     let job_payload = crate::generate_job_params::create_estimator_job_payload(
         circuit,
@@ -667,13 +677,14 @@ pub async fn submit_estimator_job(
 }
 
 pub async fn submit_sampler_job(
-    service: &Service,
+    service: &mut Service,
     backend: &Backend,
     circuit: &crate::qiskit_circuit::Circuit,
     shots: Option<i32>,
     runtime: Option<String>,
     tags: Option<Vec<String>>,
 ) -> Result<Job, ServiceError> {
+    let _ = service.update_token();
     let crn = backend.instance.crn.to_str().unwrap();
     let job_payload = crate::generate_job_params::create_sampler_job_payload(
         circuit,
@@ -699,7 +710,8 @@ pub async fn submit_sampler_job(
     })
 }
 
-pub async fn get_job_details(service: &Service, job: &Job) -> Result<JobDetails, ServiceError> {
+pub async fn get_job_details(service: &mut Service, job: &Job) -> Result<JobDetails, ServiceError> {
+    let _ = service.update_token();
     let crn = job.instance.crn.to_str().unwrap();
     let details = get_job_details_jid(
         &service.quantum_config,
@@ -720,9 +732,10 @@ pub struct Samples {
 }
 
 pub async fn get_sampler_job_results(
-    service: &Service,
+    service: &mut Service,
     job: &Job,
 ) -> Result<Samples, ServiceError> {
+    let _ = service.update_token();
     let crn = job.instance.crn.to_str().unwrap();
     let details = get_sampler_job_results_jid(
         &service.quantum_config,
@@ -758,9 +771,10 @@ pub async fn get_sampler_job_results(
 pub struct ExpectationValues(pub Vec<f64>);
 
 pub async fn get_estimator_job_results(
-    service: &Service,
+    service: &mut Service,
     job: &Job,
 ) -> Result<ExpectationValues, ServiceError> {
+    let _ = service.update_token();
     let crn = job.instance.crn.to_str().unwrap();
     let details = get_estimator_job_results_jid(
         &service.quantum_config,
@@ -775,12 +789,12 @@ pub async fn get_estimator_job_results(
     ))
 }
 
-pub async fn get_job_status(service: &Service, job: &Job) -> Result<JobStatus, ServiceError> {
+pub async fn get_job_status(service: &mut Service, job: &Job) -> Result<JobStatus, ServiceError> {
     let details = get_job_details(service, job).await?;
     Ok(details.status())
 }
 
-pub async fn get_backends(service: &Service) -> Result<BackendSearchResults, ServiceError> {
+pub async fn get_backends(service: &mut Service) -> Result<BackendSearchResults, ServiceError> {
     let mut backends = Vec::new();
     let mut ptrs = Vec::new();
     for instance in &service.instances {

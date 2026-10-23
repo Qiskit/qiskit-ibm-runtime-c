@@ -235,7 +235,7 @@ pub unsafe extern "C" fn qkrt_service_free(service: *mut Service) {
 #[no_mangle]
 pub unsafe extern "C" fn qkrt_backend_search(
     out: *mut *mut BackendSearchResults,
-    service: *const Service,
+    service: *mut Service,
 ) -> ExitCode {
     if out.is_null() {
         return ExitCode::NullPointerError;
@@ -245,7 +245,7 @@ pub unsafe extern "C" fn qkrt_backend_search(
         .enable_all()
         .build()
         .unwrap();
-    let results = check_result!(rt.block_on(get_backends(const_ptr_as_ref(service))));
+    let results = check_result!(rt.block_on(get_backends(mut_ptr_as_ref(service))));
     *out = Box::into_raw(Box::new(results));
     ExitCode::Success
 }
@@ -285,14 +285,14 @@ pub unsafe extern "C" fn qkrt_backend_search_results_least_busy(
 
 #[no_mangle]
 pub unsafe extern "C" fn qkrt_get_backend_target(
-    service: *const Service,
+    service: *mut Service,
     backend: *const Backend,
 ) -> *const QkTarget {
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
         .unwrap();
-    let service = const_ptr_as_ref(service);
+    let service = mut_ptr_as_ref(service);
     let backend = const_ptr_as_ref(backend);
     let result = rt.block_on(get_backend(service, backend));
     let output = result.0;
@@ -321,7 +321,7 @@ pub unsafe extern "C" fn qkrt_backend_instance_name(backend: *const Backend) -> 
 #[no_mangle]
 pub unsafe extern "C" fn qkrt_sampler_job_run(
     out: *mut *mut Job,
-    service: *const Service,
+    service: *mut Service,
     backend: *const Backend,
     circuit: *mut QkCircuit,
     shots: i32,
@@ -336,7 +336,7 @@ pub unsafe extern "C" fn qkrt_sampler_job_run(
         .build()
         .unwrap();
 
-    let service = const_ptr_as_ref(service);
+    let service = mut_ptr_as_ref(service);
     let backend = const_ptr_as_ref(backend);
     let runtime = if runtime.is_null() {
         None
@@ -359,7 +359,7 @@ pub unsafe extern "C" fn qkrt_sampler_job_run(
 #[no_mangle]
 pub unsafe extern "C" fn qkrt_estimator_job_run(
     out: *mut *mut Job,
-    service: *const Service,
+    service: *mut Service,
     backend: *const Backend,
     circuit: *mut QkCircuit,
     observable: *mut QkObs,
@@ -374,7 +374,7 @@ pub unsafe extern "C" fn qkrt_estimator_job_run(
         .build()
         .unwrap();
 
-    let service = const_ptr_as_ref(service);
+    let service = mut_ptr_as_ref(service);
     let backend = const_ptr_as_ref(backend);
     let runtime = if runtime.is_null() {
         None
@@ -405,7 +405,7 @@ pub unsafe extern "C" fn qkrt_job_free(job: *mut Job) {
 #[no_mangle]
 pub unsafe extern "C" fn qkrt_job_details(
     out: *mut *mut JobDetails,
-    service: *const Service,
+    service: *mut Service,
     job: *const Job,
 ) -> ExitCode {
     if out.is_null() {
@@ -416,7 +416,7 @@ pub unsafe extern "C" fn qkrt_job_details(
         .enable_all()
         .build()
         .unwrap();
-    let service = const_ptr_as_ref(service);
+    let service = mut_ptr_as_ref(service);
     let job = const_ptr_as_ref(job);
     let details = check_result!(rt.block_on(get_job_details(service, job,)));
     *out = Box::into_raw(Box::new(details));
@@ -426,14 +426,14 @@ pub unsafe extern "C" fn qkrt_job_details(
 #[no_mangle]
 pub unsafe extern "C" fn qkrt_sampler_job_results(
     out: *mut *mut Samples,
-    service: *const Service,
+    service: *mut Service,
     job: *const Job,
 ) -> ExitCode {
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
         .unwrap();
-    let service = const_ptr_as_ref(service);
+    let service = mut_ptr_as_ref(service);
     let job = const_ptr_as_ref(job);
     let samples = check_result!(rt.block_on(get_sampler_job_results(service, job,)));
     let out_samples = Box::into_raw(Box::new(samples));
@@ -489,14 +489,14 @@ pub unsafe extern "C" fn qkrt_count_clear(count: *mut QkrtCount) {
 #[no_mangle]
 pub unsafe extern "C" fn qkrt_estimator_job_results(
     out: *mut *mut ExpectationValues,
-    service: *const Service,
+    service: *mut Service,
     job: *const Job,
 ) -> ExitCode {
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
         .unwrap();
-    let service = const_ptr_as_ref(service);
+    let service = mut_ptr_as_ref(service);
     let job = const_ptr_as_ref(job);
     let results = check_result!(rt.block_on(get_estimator_job_results(service, job,)));
     let boxed_results_raw_ptr = Box::into_raw(Box::new(results));
@@ -630,14 +630,14 @@ pub unsafe extern "C" fn qkrt_job_details_free(details: *mut JobDetails) {
 #[no_mangle]
 pub unsafe extern "C" fn qkrt_job_status(
     out: *mut u32,
-    service: *const Service,
+    service: *mut Service,
     job: *const Job,
 ) -> ExitCode {
     let rt = tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()
         .unwrap();
-    let service = const_ptr_as_ref(service);
+    let service = mut_ptr_as_ref(service);
     let job = const_ptr_as_ref(job);
     let status = check_result!(rt.block_on(get_job_status(service, job,)));
     *out = status as u32;
