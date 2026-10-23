@@ -108,7 +108,7 @@ pub fn create_estimator_job_payload(
         precision: None,
         options: None,
         support_qiskit: None,
-        version: Some(ibm_quantum_platform_api::models::estimator_v2_input::Version::Variant2),
+        version: 2,
     };
     let params = Box::new(
         ibm_quantum_platform_api::models::CreateJobRequestOneOfAllOfParams::EstimatorV2Input(
