@@ -323,7 +323,7 @@ impl Account {
     }
 
     async fn refresh_token(&mut self) -> Result<(), ServiceError> {
-        let apikey: Option<&str> = if let Some(ref config) = self.user_config {
+        let apikey: &str = if let Some(ref config) = self.user_config {
             match config.token.as_deref() {
                 Some(token) => Some(token),
                 None => self.config.as_ref().map(|x| x.token.as_str()),
@@ -332,12 +332,16 @@ impl Account {
             Some(config.token.as_str())
         } else {
             None
-        };
+        }
+        .ok_or(ServiceError {
+            code: ExitCode::BadArgumentError,
+            message: "Token not specified in config and no valid config file found".to_string(),
+        })?;
 
         let response = get_token_api_key(
             &self.iam_config,
             "urn:ibm:params:oauth:grant-type:apikey",
-            apikey.expect("Token not specified in config and no valid config file found"),
+            apikey,
             None,
         )
         .await?;
