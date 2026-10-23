@@ -10,6 +10,9 @@
 // copyright notice, and modified files need to carry a notice indicating
 // that they have been altered from the originals.
 
+use chrono::prelude::*;
+use chrono::TimeDelta;
+
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::BufReader;
@@ -262,13 +265,17 @@ pub struct Service {
 }
 
 impl Service {
-    pub fn new(account: Account, instances: Vec<Instance>, user_agent: Option<String>) -> Self {
+    pub async fn new(
+        mut account: Account,
+        instances: Vec<Instance>,
+        user_agent: Option<String>,
+    ) -> Result<Self, ServiceError> {
         let mut quantum_config =
             ibm_quantum_platform_api::apis::configuration::Configuration::default();
         quantum_config.user_agent =
             Some(user_agent.unwrap_or("qiskit-ibm-runtime-rs/0.0.1".to_string()));
         quantum_config.api_key = Some(ibm_quantum_platform_api::apis::configuration::ApiKey {
-            key: account.get_access_token().unwrap().to_string(),
+            key: account.get_access_token().await?.unwrap().to_string(),
             prefix: Some("Bearer".to_string()),
         });
         if let Some(ref user_config) = account.user_config {
@@ -277,11 +284,19 @@ impl Service {
             }
         }
 
-        Service {
+        Ok(Service {
             account,
             instances,
             quantum_config,
-        }
+        })
+    }
+
+    async fn update_token(&mut self) -> Result<(), ServiceError> {
+        self.quantum_config.api_key = Some(ibm_quantum_platform_api::apis::configuration::ApiKey {
+            key: self.account.get_access_token().await?.unwrap().to_string(),
+            prefix: Some("Bearer".to_string()),
+        });
+        Ok(())
     }
 }
 
@@ -294,8 +309,48 @@ pub struct Account {
 }
 
 impl Account {
-    pub fn get_access_token(&self) -> Option<&str> {
-        self.token.access_token.as_deref()
+    pub async fn get_access_token(&mut self) -> Result<Option<&str>, ServiceError> {
+        let now = Utc::now();
+        if let Some(expr_timestamp) = self.token.expiration {
+            // If token expiry has occured or is in the next 120 seconds refresh the token
+            if DateTime::from_timestamp(expr_timestamp as i64, 0).unwrap() - now
+                < TimeDelta::seconds(120)
+            {
+                self.refresh_token().await?;
+            }
+        }
+        Ok(self.token.access_token.as_deref())
+    }
+
+    async fn refresh_token(&mut self) -> Result<(), ServiceError> {
+        let apikey: &str = if let Some(ref config) = self.user_config {
+            match config.token.as_deref() {
+                Some(token) => Some(token),
+                None => self.config.as_ref().map(|x| x.token.as_str()),
+            }
+        } else if let Some(ref config) = self.config {
+            Some(config.token.as_str())
+        } else {
+            None
+        }
+        .ok_or(ServiceError {
+            code: ExitCode::BadArgumentError,
+            message: "Token not specified in config and no valid config file found".to_string(),
+        })?;
+
+        let response = get_token_api_key(
+            &self.iam_config,
+            "urn:ibm:params:oauth:grant-type:apikey",
+            apikey,
+            None,
+        )
+        .await?;
+        log_debug(&format!(
+            "refresh_token response: {:?}",
+            &response
+        ));
+        self.token = response;
+        Ok(())
     }
 }
 
@@ -396,11 +451,11 @@ pub async fn get_account(
     })
 }
 
-pub async fn list_instances(account: &Account) -> Result<Vec<Instance>, ServiceError> {
+pub async fn list_instances(account: &mut Account) -> Result<Vec<Instance>, ServiceError> {
     let mut config = SearchConfiguration::default();
     config.user_agent = Some("qiskit-ibm-runtime-rs/0.0.1".to_string());
     config.api_key = Some(ibmcloud_global_search_api::apis::configuration::ApiKey {
-        key: account.get_access_token().unwrap().to_string(),
+        key: account.get_access_token().await?.unwrap().to_string(),
         prefix: Some("Bearer".to_string()),
     });
     if let Some(ref user_config) = account.user_config {
@@ -458,10 +513,11 @@ pub async fn list_instances(account: &Account) -> Result<Vec<Instance>, ServiceE
         .collect())
 }
 
-pub async fn get_backend(service: &Service, backend: &Backend) -> crate::qiskit_target::Target {
+pub async fn get_backend(service: &mut Service, backend: &Backend) -> crate::qiskit_target::Target {
     let name = backend.response.name.clone();
     let crn = backend.instance.crn.to_str().unwrap();
 
+    let _ = service.update_token().await;
     let backend_configuration = get_backend_configuration(
         &service.quantum_config,
         name.as_str(),
@@ -590,13 +646,14 @@ pub async fn get_backend(service: &Service, backend: &Backend) -> crate::qiskit_
 }
 
 pub async fn submit_estimator_job(
-    service: &Service,
+    service: &mut Service,
     backend: &Backend,
     circuit: &crate::qiskit_circuit::Circuit,
     observable: &crate::qiskit_observable::SparseObservable,
     runtime: Option<String>,
     tags: Option<Vec<String>>,
 ) -> Result<Job, ServiceError> {
+    let _ = service.update_token();
     let crn = backend.instance.crn.to_str().unwrap();
     let job_payload = crate::generate_job_params::create_estimator_job_payload(
         circuit,
@@ -624,13 +681,14 @@ pub async fn submit_estimator_job(
 }
 
 pub async fn submit_sampler_job(
-    service: &Service,
+    service: &mut Service,
     backend: &Backend,
     circuit: &crate::qiskit_circuit::Circuit,
     shots: Option<i32>,
     runtime: Option<String>,
     tags: Option<Vec<String>>,
 ) -> Result<Job, ServiceError> {
+    let _ = service.update_token();
     let crn = backend.instance.crn.to_str().unwrap();
     let job_payload = crate::generate_job_params::create_sampler_job_payload(
         circuit,
@@ -656,7 +714,8 @@ pub async fn submit_sampler_job(
     })
 }
 
-pub async fn get_job_details(service: &Service, job: &Job) -> Result<JobDetails, ServiceError> {
+pub async fn get_job_details(service: &mut Service, job: &Job) -> Result<JobDetails, ServiceError> {
+    let _ = service.update_token();
     let crn = job.instance.crn.to_str().unwrap();
     let details = get_job_details_jid(
         &service.quantum_config,
@@ -677,9 +736,10 @@ pub struct Samples {
 }
 
 pub async fn get_sampler_job_results(
-    service: &Service,
+    service: &mut Service,
     job: &Job,
 ) -> Result<Samples, ServiceError> {
+    let _ = service.update_token();
     let crn = job.instance.crn.to_str().unwrap();
     let details = get_sampler_job_results_jid(
         &service.quantum_config,
@@ -715,9 +775,10 @@ pub async fn get_sampler_job_results(
 pub struct ExpectationValues(pub Vec<f64>);
 
 pub async fn get_estimator_job_results(
-    service: &Service,
+    service: &mut Service,
     job: &Job,
 ) -> Result<ExpectationValues, ServiceError> {
+    let _ = service.update_token();
     let crn = job.instance.crn.to_str().unwrap();
     let details = get_estimator_job_results_jid(
         &service.quantum_config,
@@ -732,12 +793,12 @@ pub async fn get_estimator_job_results(
     ))
 }
 
-pub async fn get_job_status(service: &Service, job: &Job) -> Result<JobStatus, ServiceError> {
+pub async fn get_job_status(service: &mut Service, job: &Job) -> Result<JobStatus, ServiceError> {
     let details = get_job_details(service, job).await?;
     Ok(details.status())
 }
 
-pub async fn get_backends(service: &Service) -> Result<BackendSearchResults, ServiceError> {
+pub async fn get_backends(service: &mut Service) -> Result<BackendSearchResults, ServiceError> {
     let mut backends = Vec::new();
     let mut ptrs = Vec::new();
     for instance in &service.instances {
