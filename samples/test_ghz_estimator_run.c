@@ -20,16 +20,13 @@
 
 int main(int argc, char *arv[]) {
     // Build a 5 qubit GHZ state
-    QkCircuit *qc = qk_circuit_new(5, 5);
+    QkCircuit *qc = qk_circuit_new(5, 0);
     uint32_t h_qargs[1] = {0, };
     qk_circuit_gate(qc, QkGate_H, h_qargs, NULL);
 
     for (int i = 1; i < 5; i++) {
         uint32_t qubits[2] = {0, i};
         qk_circuit_gate(qc, QkGate_CX, qubits, NULL);
-    }
-    for (int i = 0; i < 5; i++) {
-        qk_circuit_measure(qc, i, i);
     }
 
     // Access IQP and select backend

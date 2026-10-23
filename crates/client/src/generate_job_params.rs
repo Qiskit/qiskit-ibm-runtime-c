@@ -10,7 +10,6 @@
 // copyright notice, and modified files need to carry a notice indicating
 // that they have been altered from the originals.
 
-use crate::generate_qpy;
 use crate::qiskit_circuit;
 use crate::qiskit_observable;
 use flate2::write::ZlibEncoder;
@@ -21,9 +20,13 @@ pub fn generate_single_pubs_payload(
     circuit: &qiskit_circuit::Circuit,
 ) -> Vec<ibm_quantum_platform_api::models::SamplerV2InputPubsInner> {
     let base64 = base64_simd::STANDARD;
-    let qpy = generate_qpy::generate_qpy_payload(circuit).unwrap();
+    let qpy_result = circuit.generate_qpy();
+    let qpy: &[u8] = match qpy_result {
+        Ok(ref qpy) => qpy.as_slice(),
+        Err(err_str) => panic!("QPY Generation Error: {}", err_str),
+    };
     let mut compress = ZlibEncoder::new(Vec::new(), Compression::default());
-    compress.write_all(&qpy).unwrap();
+    compress.write_all(qpy).unwrap();
     let compressed_qpy = compress.finish().unwrap();
     let encoded_circuit = base64.encode_to_string(compressed_qpy);
     vec![ibm_quantum_platform_api::models::SamplerV2InputPubsInner::new(encoded_circuit)]
@@ -68,9 +71,13 @@ pub fn generate_single_estimator_pubs_payload(
     observable: &qiskit_observable::SparseObservable,
 ) -> Vec<ibm_quantum_platform_api::models::EstimatorV2InputPubsInner> {
     let base64 = base64_simd::STANDARD;
-    let qpy = generate_qpy::generate_qpy_payload(circuit).unwrap();
+    let qpy_result = circuit.generate_qpy();
+    let qpy: &[u8] = match qpy_result {
+        Ok(ref qpy) => qpy.as_slice(),
+        Err(err_str) => panic!("QPY Generation Error: {}", err_str),
+    };
     let mut compress = ZlibEncoder::new(Vec::new(), Compression::default());
-    compress.write_all(&qpy).unwrap();
+    compress.write_all(qpy).unwrap();
     let compressed_qpy = compress.finish().unwrap();
     let encoded_circuit = base64.encode_to_string(compressed_qpy);
     vec![

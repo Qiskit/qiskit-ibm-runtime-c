@@ -11,7 +11,6 @@
 // that they have been altered from the originals.
 
 use crate::generate_job_params::create_sampler_job_payload;
-use crate::generate_qpy::generate_qpy_payload;
 use crate::pointers::{const_ptr_as_ref, mut_ptr_as_ref};
 use crate::qiskit_circuit::Circuit;
 use crate::qiskit_ffi::{QkCircuit, QkObs, QkTarget};
@@ -53,8 +52,12 @@ pub unsafe extern "C" fn generate_qpy(circuit: *mut QkCircuit, filename: *const 
     let circuit = Circuit(circuit);
     let path = unsafe { Path::new(CStr::from_ptr(filename).to_str().unwrap()) };
     let mut file = File::create(path).unwrap();
-    let qpy = generate_qpy_payload(&circuit).unwrap();
-    file.write_all(&qpy).unwrap();
+    let qpy_result = circuit.generate_qpy();
+    let qpy: &[u8] = match qpy_result {
+        Ok(ref qpy) => qpy.as_slice(),
+        Err(err_str) => panic!("QPY Generation Error: {}", err_str),
+    };
+    file.write_all(qpy).unwrap();
 }
 
 /// Save a sampler job payload JSON body to a file
