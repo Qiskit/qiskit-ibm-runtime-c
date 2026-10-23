@@ -81,8 +81,9 @@ set_property(TARGET qiskit PROPERTY INTERFACE_INCLUDE_DIRECTORIES ${QISKIT_INCDI
 add_dependencies(qiskit qiskit_src)
 
 # ---- Build Rust cdylib via cargo --------------------------------------------
-add_custom_command(
-        OUTPUT ${RUST_LIBPATH}
+# Run cargo unconditionally and let it decide what to rebuild.  As an OUTPUT rule with no
+# prerequisites, make would skip cargo entirely once the library existed.
+add_custom_target(qiskit_ibm_runtime_build ALL
         COMMAND ${CARGO_EXECUTABLE} build
         --manifest-path ${CMAKE_SOURCE_DIR}/crates/client/Cargo.toml
         --profile ${CARGO_PROFILE}
@@ -93,8 +94,6 @@ add_custom_command(
         COMMENT "Building Rust library (cargo ${CARGO_PROFILE} → ${RUST_LIBPATH})"
         VERBATIM
 )
-
-add_custom_target(qiskit_ibm_runtime_build ALL DEPENDS ${RUST_LIBPATH})
 
 add_library(qiskit_ibm_runtime SHARED IMPORTED GLOBAL)
 set_property(TARGET qiskit_ibm_runtime PROPERTY IMPORTED_LOCATION ${RUST_LIBPATH})
