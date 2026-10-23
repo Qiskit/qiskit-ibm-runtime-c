@@ -346,7 +346,7 @@ impl Account {
         )
         .await?;
         log_debug(&format!(
-            "get_account_from_config response: {:?}",
+            "refresh_token response: {:?}",
             &response
         ));
         self.token = response;
