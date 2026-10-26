@@ -345,10 +345,7 @@ impl Account {
             None,
         )
         .await?;
-        log_debug(&format!(
-            "refresh_token response: {:?}",
-            &response
-        ));
+        log_debug(&format!("refresh_token response: {:?}", &response));
         self.token = response;
         Ok(())
     }
