@@ -320,7 +320,7 @@ pub unsafe extern "C" fn qkrt_sampler_job_run(
     out: *mut *mut Job,
     service: *const Service,
     backend: *const Backend,
-    circuit: *mut QkCircuit,
+    circuit: *const QkCircuit,
     shots: i32,
     runtime: *const c_char,
 ) -> ExitCode {
@@ -358,7 +358,7 @@ pub unsafe extern "C" fn qkrt_estimator_job_run(
     out: *mut *mut Job,
     service: *const Service,
     backend: *const Backend,
-    circuit: *mut QkCircuit,
+    circuit: *const QkCircuit,
     observable: *mut QkObs,
     runtime: *const c_char,
 ) -> ExitCode {

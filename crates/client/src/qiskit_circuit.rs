@@ -78,7 +78,7 @@ impl<'a> Iterator for CircuitInstructions<'a> {
     }
 }
 
-pub struct Circuit(pub *mut qiskit_ffi::QkCircuit);
+pub struct Circuit(pub *const qiskit_ffi::QkCircuit);
 
 impl Circuit {
     pub fn num_qubits(&self) -> u32 {
