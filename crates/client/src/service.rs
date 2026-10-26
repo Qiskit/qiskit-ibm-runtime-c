@@ -650,7 +650,7 @@ pub async fn submit_estimator_job(
     runtime: Option<String>,
     tags: Option<Vec<String>>,
 ) -> Result<Job, ServiceError> {
-    let _ = service.update_token().await;
+    service.update_token().await?;
     let crn = backend.instance.crn.to_str().unwrap();
     let job_payload = crate::generate_job_params::create_estimator_job_payload(
         circuit,
@@ -685,7 +685,7 @@ pub async fn submit_sampler_job(
     runtime: Option<String>,
     tags: Option<Vec<String>>,
 ) -> Result<Job, ServiceError> {
-    let _ = service.update_token().await;
+    service.update_token().await?;
     let crn = backend.instance.crn.to_str().unwrap();
     let job_payload = crate::generate_job_params::create_sampler_job_payload(
         circuit,
@@ -712,7 +712,7 @@ pub async fn submit_sampler_job(
 }
 
 pub async fn get_job_details(service: &mut Service, job: &Job) -> Result<JobDetails, ServiceError> {
-    let _ = service.update_token().await;
+    service.update_token().await?;
     let crn = job.instance.crn.to_str().unwrap();
     let details = get_job_details_jid(
         &service.quantum_config,
@@ -736,7 +736,7 @@ pub async fn get_sampler_job_results(
     service: &mut Service,
     job: &Job,
 ) -> Result<Samples, ServiceError> {
-    let _ = service.update_token().await;
+    service.update_token().await?;
     let crn = job.instance.crn.to_str().unwrap();
     let details = get_sampler_job_results_jid(
         &service.quantum_config,
@@ -775,7 +775,7 @@ pub async fn get_estimator_job_results(
     service: &mut Service,
     job: &Job,
 ) -> Result<ExpectationValues, ServiceError> {
-    let _ = service.update_token().await;
+    service.update_token().await?;
     let crn = job.instance.crn.to_str().unwrap();
     let details = get_estimator_job_results_jid(
         &service.quantum_config,
