@@ -18,7 +18,7 @@
 
 #include <qiskit_ibm_runtime/qiskit_ibm_runtime.h>
 
-int main(int argc, char *arv[]) {
+int main(int argc, char *argv[]) {
     // Build a 5 qubit GHZ state
     QkCircuit *qc = qk_circuit_new(5, 5);
     uint32_t h_qargs[1] = {0, };
@@ -35,7 +35,9 @@ int main(int argc, char *arv[]) {
     // Access IQP and select backend
     int res = 0;
     Service *service;
-    res = qkrt_service_new(&service);
+    QkrtServiceConfig config = qkrt_default_service_config();
+    config.user_agent = "custom-compiled-client/1.0.0";
+    res = qkrt_service_new_from_config(&config, &service);
     if (res != 0) {
         printf("service new failed with code: %d\n", res);
         goto cleanup;
@@ -60,7 +62,7 @@ int main(int argc, char *arv[]) {
     uint64_t selected_backend = 0;
     printf("\nenter the index of the backend to select: ");
     scanf("%llu", &selected_backend);
-    printf("selected backed: %llu", &selected_backend);
+    printf("selected backend: %llu", selected_backend);
 
     // Transpile circuit for backend
     QkTarget *target = qkrt_get_backend_target(service, backends[selected_backend]);
@@ -73,7 +75,7 @@ int main(int argc, char *arv[]) {
         printf("transpilation failed with: %s", error);
         goto cleanup_transpile;
     }
-    // Run Job on backend 
+    // Run Job on backend
     int32_t shots = 10000;
     Job *job;
     res = qkrt_sampler_job_run(&job, service, backends[selected_backend], transpile_result.circuit, shots, NULL);
@@ -95,7 +97,7 @@ int main(int argc, char *arv[]) {
     } while (status == 0 || status == 1);
     printf("job terminated with status: %d\n", status);
     Samples *samples;
-    res = qkrt_job_results(&samples, service, job);
+    res = qkrt_sampler_job_results(&samples, service, job);
 
     printf("Job has %d samples\nThe first sample is:\n", qkrt_samples_num_samples(samples));
     char *first_sample = qkrt_samples_get_sample(samples, 0);

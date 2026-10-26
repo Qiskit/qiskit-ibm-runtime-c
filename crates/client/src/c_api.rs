@@ -12,9 +12,10 @@
 
 use crate::generate_job_params::create_sampler_job_payload;
 use crate::generate_qpy::generate_qpy_payload;
-use crate::pointers::const_ptr_as_ref;
+use crate::pointers::{const_ptr_as_ref, mut_ptr_as_ref};
 use crate::qiskit_circuit::Circuit;
-use crate::qiskit_ffi::{QkCircuit, QkTarget};
+use crate::qiskit_ffi::{QkCircuit, QkObs, QkTarget};
+use crate::qiskit_observable::SparseObservable;
 use crate::{log_err, ExitCode};
 use std::ffi::{c_char, CStr, CString};
 use std::fs::File;
@@ -22,10 +23,13 @@ use std::io::prelude::*;
 use std::path::Path;
 
 use crate::service::{
-    get_account_from_config, get_backend, get_backends, get_job_details, get_job_results,
-    get_job_status, list_instances, submit_sampler_job, Backend, BackendSearchResults, Job,
-    JobDetails, Samples, Service, ServiceError,
+    get_account, get_account_from_config, get_backend, get_backends, get_estimator_job_results,
+    get_job_details, get_job_status, get_sampler_job_results, list_instances, submit_estimator_job,
+    submit_sampler_job, AccountConfig, Backend, BackendSearchResults, ExpectationValues, Job,
+    JobDetails, Samples, Service,
 };
+
+use crate::counts::Counts;
 
 macro_rules! check_result {
     ($expr:expr) => {
@@ -97,14 +101,122 @@ pub unsafe extern "C" fn qkrt_service_new(out: *mut *mut Service) -> ExitCode {
         .unwrap();
     let account = check_result!(rt.block_on(get_account_from_config(None, None)));
     let mut instances = check_result!(rt.block_on(list_instances(&account)));
-    if let Some(instance) = &account.config.instance {
+    if let Some(instance) = &account
+        .config
+        .as_ref()
+        .map(|x| x.instance.clone())
+        .flatten()
+    {
         // Filter-out any instance that doesn't match the user's config.
-        instances = instances
-            .into_iter()
-            .filter(|x| &x.crn.to_str().unwrap() == &instance)
-            .collect()
+        instances.retain(|x| x.crn.to_str().unwrap() == instance)
     }
-    *out = Box::into_raw(Box::new(Service::new(account, instances)));
+    *out = Box::into_raw(Box::new(Service::new(account, instances, None)));
+    ExitCode::Success
+}
+
+#[repr(C)]
+pub struct QkrtServiceConfig {
+    token: *const c_char,
+    iam_url: *const c_char,
+    iqp_url: *const c_char,
+    global_search_url: *const c_char,
+    user_agent: *const c_char,
+    filename: *const c_char,
+    account_name: *const c_char,
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_default_service_config() -> QkrtServiceConfig {
+    QkrtServiceConfig {
+        token: std::ptr::null(),
+        iam_url: std::ptr::null(),
+        iqp_url: std::ptr::null(),
+        global_search_url: std::ptr::null(),
+        user_agent: std::ptr::null(),
+        filename: std::ptr::null(),
+        account_name: std::ptr::null(),
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_service_new_from_config(
+    config: *const QkrtServiceConfig,
+    out: *mut *mut Service,
+) -> ExitCode {
+    let config = const_ptr_as_ref(config);
+    let token = if config.token.is_null() {
+        None
+    } else {
+        Some(CStr::from_ptr(config.token).to_str().unwrap().to_owned())
+    };
+    let iam_url = if config.iam_url.is_null() {
+        None
+    } else {
+        Some(CStr::from_ptr(config.iam_url).to_str().unwrap().to_owned())
+    };
+    let iqp_url = if config.iqp_url.is_null() {
+        None
+    } else {
+        Some(CStr::from_ptr(config.iqp_url).to_str().unwrap().to_owned())
+    };
+    let global_search_url = if config.global_search_url.is_null() {
+        None
+    } else {
+        Some(
+            CStr::from_ptr(config.global_search_url)
+                .to_str()
+                .unwrap()
+                .to_owned(),
+        )
+    };
+    let user_agent = if config.user_agent.is_null() {
+        None
+    } else {
+        Some(
+            CStr::from_ptr(config.user_agent)
+                .to_str()
+                .unwrap()
+                .to_owned(),
+        )
+    };
+    let filename = if config.filename.is_null() {
+        None
+    } else {
+        Some(CStr::from_ptr(config.filename).to_str().unwrap())
+    };
+    let account_name = if config.account_name.is_null() {
+        None
+    } else {
+        Some(CStr::from_ptr(config.account_name).to_str().unwrap())
+    };
+    if out.is_null() {
+        return ExitCode::NullPointerError;
+    }
+    let account_config = AccountConfig {
+        iam_url,
+        iqp_url,
+        global_search_url,
+        user_agent: user_agent.clone(),
+        token,
+    };
+    *out = std::ptr::null_mut();
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+    let account = check_result!(rt.block_on(get_account(account_config, filename, account_name)));
+    let mut instances = check_result!(rt.block_on(list_instances(&account)));
+    if let Some(instance) = &account
+        .config
+        .as_ref()
+        .map(|x| x.instance.clone())
+        .flatten()
+    {
+        // Filter-out any instance that doesn't match the user's config.
+        instances.retain(|x| x.crn.to_str().unwrap() == instance);
+    }
+    *out = Box::into_raw(Box::new(Service::new(account, instances, user_agent)));
+
     ExitCode::Success
 }
 
@@ -242,6 +354,43 @@ pub unsafe extern "C" fn qkrt_sampler_job_run(
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn qkrt_estimator_job_run(
+    out: *mut *mut Job,
+    service: *const Service,
+    backend: *const Backend,
+    circuit: *mut QkCircuit,
+    observable: *mut QkObs,
+    runtime: *const c_char,
+) -> ExitCode {
+    if out.is_null() {
+        return ExitCode::NullPointerError;
+    }
+    *out = std::ptr::null_mut();
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+
+    let service = const_ptr_as_ref(service);
+    let backend = const_ptr_as_ref(backend);
+    let runtime = if runtime.is_null() {
+        None
+    } else {
+        unsafe { Some(CStr::from_ptr(runtime).to_str().unwrap().to_string()) }
+    };
+    let job = check_result!(rt.block_on(submit_estimator_job(
+        service,
+        backend,
+        &Circuit(circuit),
+        &SparseObservable(observable),
+        runtime,
+        None,
+    )));
+    *out = Box::into_raw(Box::new(job));
+    ExitCode::Success
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn qkrt_job_free(job: *mut Job) {
     if !job.is_null() {
         unsafe {
@@ -272,7 +421,7 @@ pub unsafe extern "C" fn qkrt_job_details(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn qkrt_job_results(
+pub unsafe extern "C" fn qkrt_sampler_job_results(
     out: *mut *mut Samples,
     service: *const Service,
     job: *const Job,
@@ -283,15 +432,128 @@ pub unsafe extern "C" fn qkrt_job_results(
         .unwrap();
     let service = const_ptr_as_ref(service);
     let job = const_ptr_as_ref(job);
-    let samples = check_result!(rt.block_on(get_job_results(service, job,)));
+    let samples = check_result!(rt.block_on(get_sampler_job_results(service, job,)));
     let out_samples = Box::into_raw(Box::new(samples));
     *out = out_samples;
     ExitCode::Success
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn qkrt_samples_to_counts(samples: *const Samples) -> *mut Counts {
+    let samples = unsafe { const_ptr_as_ref(samples) };
+    let histogram = Counts::from_samples(&samples.samples);
+    Box::into_raw(Box::new(histogram))
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_counts_length(counts: *const Counts) -> usize {
+    let counts = unsafe { const_ptr_as_ref(counts) };
+    counts.len()
+}
+
+#[repr(C)]
+pub struct QkrtCount {
+    name: *mut c_char,
+    count: u64,
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_counts_get_count(
+    counts: *const Counts,
+    index: usize,
+    out_count: *mut QkrtCount,
+) -> ExitCode {
+    let counts = unsafe { const_ptr_as_ref(counts) };
+    let out_count = unsafe { mut_ptr_as_ref(out_count) };
+    let Some(counts_tuple) = counts.get_item(index) else {
+        return ExitCode::BadArgumentError;
+    };
+    out_count.name = CString::new(counts_tuple.0.as_bytes()).unwrap().into_raw();
+    out_count.count = counts_tuple.1;
+    ExitCode::Success
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_count_clear(count: *mut QkrtCount) {
+    if !count.is_null() {
+        let counts = unsafe { mut_ptr_as_ref(count) };
+        let _ = CString::from_raw(counts.name);
+        counts.name = std::ptr::null_mut();
+        counts.count = 0;
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_estimator_job_results(
+    out: *mut *mut ExpectationValues,
+    service: *const Service,
+    job: *const Job,
+) -> ExitCode {
+    let rt = tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .unwrap();
+    let service = const_ptr_as_ref(service);
+    let job = const_ptr_as_ref(job);
+    let results = check_result!(rt.block_on(get_estimator_job_results(service, job,)));
+    let boxed_results_raw_ptr = Box::into_raw(Box::new(results));
+    *out = boxed_results_raw_ptr;
+    ExitCode::Success
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_counts_most_frequent(counts: *const Counts) -> *mut c_char {
+    let counts = unsafe { const_ptr_as_ref(counts) };
+    CString::new(counts.most_frequent().as_bytes())
+        .unwrap()
+        .into_raw()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_counts_least_frequent(counts: *const Counts) -> *mut c_char {
+    let counts = unsafe { const_ptr_as_ref(counts) };
+    CString::new(counts.least_frequent().as_bytes())
+        .unwrap()
+        .into_raw()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_counts_sort_by_frequency(
+    counts: *mut Counts,
+    most_frequent_first: bool,
+) {
+    let counts = unsafe { mut_ptr_as_ref(counts) };
+    counts.sort_by_frequency(most_frequent_first);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_counts_get_by_sample(
+    counts: *const Counts,
+    sample: *const c_char,
+) -> u64 {
+    let counts = unsafe { const_ptr_as_ref(counts) };
+    let sample_str = CStr::from_ptr(sample).to_str().unwrap();
+    counts.get(sample_str).unwrap_or(u64::MAX)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_counts_display(counts: *const Counts) {
+    unsafe { const_ptr_as_ref(counts) }.display()
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn qkrt_samples_num_samples(samples: *const Samples) -> usize {
-    unsafe { const_ptr_as_ref(samples) }.0.len()
+    unsafe { const_ptr_as_ref(samples) }.samples.len()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_samples_num_bits(samples: *const Samples) -> u32 {
+    unsafe { const_ptr_as_ref(samples) }.num_bits
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_expectation_values_num_evs(evs: *const ExpectationValues) -> usize {
+    unsafe { const_ptr_as_ref(evs) }.0.len()
 }
 
 #[no_mangle]
@@ -300,9 +562,31 @@ pub unsafe extern "C" fn qkrt_samples_get_sample(
     index: usize,
 ) -> *mut c_char {
     let samples = unsafe { const_ptr_as_ref(samples) };
-    let sample: &String = &samples.0[index];
+    let sample: &String = &samples.samples[index];
     let c_string = CString::new(sample.as_bytes()).unwrap();
     c_string.into_raw()
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_expectation_values_get_ev(
+    samples: *const ExpectationValues,
+    index: usize,
+) -> f64 {
+    let samples = unsafe { const_ptr_as_ref(samples) };
+    samples.0[index]
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_expectation_values_copy_into(
+    evs: *const ExpectationValues,
+    out: *mut f64,
+) {
+    let evs = unsafe { const_ptr_as_ref(evs) };
+    let out_slice = unsafe { std::slice::from_raw_parts_mut(out, evs.0.len()) };
+    evs.0
+        .iter()
+        .zip(out_slice.iter_mut())
+        .for_each(|(src, dst)| *dst = *src);
 }
 
 #[no_mangle]
@@ -314,6 +598,20 @@ pub unsafe extern "C" fn qkrt_str_free(string: *mut c_char) {
 pub unsafe extern "C" fn qkrt_samples_free(samples: *mut Samples) {
     if !samples.is_null() {
         drop(Box::from_raw(samples))
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_counts_free(counts: *mut Counts) {
+    if !counts.is_null() {
+        drop(Box::from_raw(counts))
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn qkrt_expectation_values_free(evs: *mut ExpectationValues) {
+    if !evs.is_null() {
+        drop(Box::from_raw(evs))
     }
 }
 
@@ -353,4 +651,17 @@ pub extern "C" fn get_access_token() {
     let account = rt.block_on(get_account_from_config(None, None)).unwrap();
     println!("run");
     println!("token: {:?}", account.get_access_token());
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_copy_evs() {
+        let evs = ExpectationValues(vec![1.0, 0.0, -1.5]);
+        let mut out: Vec<f64> = vec![0.0; 3];
+        unsafe { qkrt_expectation_values_copy_into(&evs, out.as_mut_ptr()) };
+        assert_eq!(out, evs.0);
+    }
 }

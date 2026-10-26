@@ -19,7 +19,7 @@ use ibm_quantum_platform_api::apis::backends_api::{
     get_backend_configuration, get_backend_properties, list_backends,
 };
 use ibm_quantum_platform_api::apis::jobs_api::{
-    create_job, get_job_details_jid, get_job_results_jid,
+    create_job, get_estimator_job_results_jid, get_job_details_jid, get_sampler_job_results_jid,
 };
 use ibm_quantum_platform_api::models::{
     BackendsResponseV2DevicesInner, CreateJob200Response, CreateJobRequest,
@@ -33,7 +33,6 @@ use ibmcloud_iam_api::models::token_response::TokenResponse;
 use crate::{log_debug, log_warn, ExitCode};
 use ibm_quantum_platform_api::models;
 use ibm_quantum_platform_api::models::job_response::Status;
-use ibm_quantum_platform_api::models::SamplerV2Result;
 use std::collections::HashMap;
 use std::error;
 use std::ffi::{c_char, CString};
@@ -232,11 +231,11 @@ impl<T: Debug> From<ibmcloud_iam_api::apis::Error<T>> for ServiceError {
     }
 }
 
-fn get_account_config(filename: Option<&str>, name: Option<&str>) -> AccountEntry {
+fn get_account_config(filename: Option<&str>, name: Option<&str>) -> Option<AccountEntry> {
     let filename = match filename {
         Some(path) => path.to_string(),
         None => {
-            let home = std::env::var("HOME").unwrap();
+            let home = std::env::var("HOME").ok()?;
             format!("{}/.qiskit/qiskit-ibm.json", home)
         }
     };
@@ -244,15 +243,15 @@ fn get_account_config(filename: Option<&str>, name: Option<&str>) -> AccountEntr
 
     let file = File::open(file_path).unwrap();
     let reader = BufReader::new(file);
-    let accounts: HashMap<String, AccountEntry> = serde_json::from_reader(reader).unwrap();
-    match name {
+    let accounts: HashMap<String, AccountEntry> = serde_json::from_reader(reader).ok()?;
+    Some(match name {
         Some(name) => accounts[name].clone(),
         None => accounts
             .get("default")
             .or_else(|| accounts.get("default-ibm-quantum-platform"))
             .unwrap_or_else(|| &accounts["default-ibm-cloud"])
             .clone(),
-    }
+    })
 }
 
 #[derive(Clone, Debug)]
@@ -263,14 +262,20 @@ pub struct Service {
 }
 
 impl Service {
-    pub fn new(account: Account, instances: Vec<Instance>) -> Self {
+    pub fn new(account: Account, instances: Vec<Instance>, user_agent: Option<String>) -> Self {
         let mut quantum_config =
             ibm_quantum_platform_api::apis::configuration::Configuration::default();
-        quantum_config.user_agent = Some("qiskit-ibm-runtime-rs/0.0.1".to_string());
+        quantum_config.user_agent =
+            Some(user_agent.unwrap_or("qiskit-ibm-runtime-rs/0.0.1".to_string()));
         quantum_config.api_key = Some(ibm_quantum_platform_api::apis::configuration::ApiKey {
             key: account.get_access_token().unwrap().to_string(),
             prefix: Some("Bearer".to_string()),
         });
+        if let Some(ref user_config) = account.user_config {
+            if let Some(ref iqp_url) = user_config.iqp_url {
+                quantum_config.base_path = iqp_url.clone();
+            }
+        }
 
         Service {
             account,
@@ -282,9 +287,10 @@ impl Service {
 
 #[derive(Clone, Debug)]
 pub struct Account {
-    pub config: AccountEntry,
+    pub config: Option<AccountEntry>,
     token: TokenResponse,
     iam_config: Configuration,
+    user_config: Option<AccountConfig>,
 }
 
 impl Account {
@@ -303,7 +309,8 @@ pub async fn get_account_from_config(
     filename: Option<&str>,
     name: Option<&str>,
 ) -> Result<Account, ServiceError> {
-    let config = get_account_config(filename, name);
+    let config = get_account_config(filename, name)
+        .expect("Specified configuration filename or name does not exist");
     let iam_config = Configuration {
         base_path: "https://iam.cloud.ibm.com".to_owned(),
         user_agent: Some("qiskit-ibm-runtime-rs/0.0.1".to_owned()),
@@ -325,9 +332,67 @@ pub async fn get_account_from_config(
         &response
     ));
     Ok(Account {
-        config,
+        config: Some(config),
         token: response,
         iam_config,
+        user_config: None,
+    })
+}
+
+#[derive(Clone, Debug)]
+pub(crate) struct AccountConfig {
+    pub(crate) iam_url: Option<String>,
+    pub(crate) iqp_url: Option<String>,
+    pub(crate) global_search_url: Option<String>,
+    pub(crate) user_agent: Option<String>,
+    pub(crate) token: Option<String>,
+}
+
+pub async fn get_account(
+    config: AccountConfig,
+    filename: Option<&str>,
+    name: Option<&str>,
+) -> Result<Account, ServiceError> {
+    let file_config = get_account_config(filename, name);
+    let iam_config = Configuration {
+        base_path: config
+            .iam_url
+            .clone()
+            .unwrap_or("https://iam.cloud.ibm.com".to_owned()),
+        user_agent: Some(
+            config
+                .user_agent
+                .clone()
+                .unwrap_or("qiskit-ibm-runtime-rs/0.0.1".to_owned()),
+        ),
+        client: reqwest::Client::new(),
+        basic_auth: None,
+        oauth_access_token: None,
+        bearer_access_token: None,
+        api_key: None,
+    };
+    let response = get_token_api_key(
+        &iam_config,
+        "urn:ibm:params:oauth:grant-type:apikey",
+        config.token.as_deref().unwrap_or_else(|| {
+            file_config
+                .as_ref()
+                .expect("Token not specified in config and no valid config file found")
+                .token
+                .as_str()
+        }),
+        None,
+    )
+    .await?;
+    log_debug(&format!(
+        "get_account_from_config response: {:?}",
+        &response
+    ));
+    Ok(Account {
+        config: file_config,
+        token: response,
+        iam_config,
+        user_config: Some(config),
     })
 }
 
@@ -338,6 +403,14 @@ pub async fn list_instances(account: &Account) -> Result<Vec<Instance>, ServiceE
         key: account.get_access_token().unwrap().to_string(),
         prefix: Some("Bearer".to_string()),
     });
+    if let Some(ref user_config) = account.user_config {
+        if let Some(ref base_path) = user_config.global_search_url {
+            config.base_path = base_path.clone();
+        }
+        if let Some(ref user_agent) = user_config.user_agent {
+            config.user_agent = Some(user_agent.clone());
+        }
+    }
     let body = ibmcloud_global_search_api::models::SearchRequest::FirstCall(Box::new(
         ibmcloud_global_search_api::models::FirstCall {
             query: "service_name:quantum-computing".to_string(),
@@ -468,6 +541,11 @@ pub async fn get_backend(service: &Service, backend: &Backend) -> crate::qiskit_
             // TODO: Add RZZ support when we have angle wrapping in
             // Qiskit's target and C transpiler.
             //            crate::qiskit_target::ISAGate::RZZ
+            log_warn(&concat!(
+                "rzz gate's constraints cannot be represented in the target from C ",
+                "currently. It is being excluded from the target generated for ",
+                "this backend."
+            ));
             continue;
         } else if gate == "reset" {
             target.add_reset(
@@ -477,7 +555,9 @@ pub async fn get_backend(service: &Service, backend: &Backend) -> crate::qiskit_
             );
             continue;
         } else {
-            panic!("What is a {gate}?");
+            log_warn(&format!(
+                "{gate} can not be represented in the Target for {name} because it does not correspond to a Qiskit standard operation. It will not be included in the target generated for this backend."));
+            continue;
         };
         target.add_gate(
             gate,
@@ -489,7 +569,7 @@ pub async fn get_backend(service: &Service, backend: &Backend) -> crate::qiskit_
     let measure_props = backend_properties["qubits"]
         .as_array()
         .unwrap()
-        .into_iter()
+        .iter()
         .enumerate()
         .map(|(idx, props)| {
             let mut error = None;
@@ -507,6 +587,40 @@ pub async fn get_backend(service: &Service, backend: &Backend) -> crate::qiskit_
         });
     target.add_measure(measure_props);
     target
+}
+
+pub async fn submit_estimator_job(
+    service: &Service,
+    backend: &Backend,
+    circuit: &crate::qiskit_circuit::Circuit,
+    observable: &crate::qiskit_observable::SparseObservable,
+    runtime: Option<String>,
+    tags: Option<Vec<String>>,
+) -> Result<Job, ServiceError> {
+    let crn = backend.instance.crn.to_str().unwrap();
+    let job_payload = crate::generate_job_params::create_estimator_job_payload(
+        circuit,
+        observable,
+        backend.response.name.clone(),
+        None,
+        runtime,
+        tags,
+    );
+    let res = create_job(
+        &service.quantum_config,
+        crn,
+        Some("2025-06-01"),
+        None,
+        Some(CreateJobRequest::CreateJobRequestOneOf(Box::new(
+            job_payload,
+        ))),
+    )
+    .await?;
+    log_debug(&format!("submit_sampler_job response: {:?}", res));
+    Ok(Job {
+        instance: backend.instance.clone(),
+        response: res,
+    })
 }
 
 pub async fn submit_sampler_job(
@@ -557,11 +671,17 @@ pub async fn get_job_details(service: &Service, job: &Job) -> Result<JobDetails,
 }
 
 #[derive(Debug)]
-pub struct Samples(pub Vec<String>);
+pub struct Samples {
+    pub samples: Vec<String>,
+    pub num_bits: u32,
+}
 
-pub async fn get_job_results(service: &Service, job: &Job) -> Result<Samples, ServiceError> {
+pub async fn get_sampler_job_results(
+    service: &Service,
+    job: &Job,
+) -> Result<Samples, ServiceError> {
     let crn = job.instance.crn.to_str().unwrap();
-    let details = get_job_results_jid(
+    let details = get_sampler_job_results_jid(
         &service.quantum_config,
         crn,
         &job.response.id,
@@ -569,15 +689,47 @@ pub async fn get_job_results(service: &Service, job: &Job) -> Result<Samples, Se
     )
     .await?;
     log_debug(&format!("get_job_result response: {:?}", details));
-    let res = Ok(Samples(
-        details
+    // TODO: Sampler submission is currently single-PUB -- see
+    // generate_job_params::generate_single_pubs_payload -- so
+    // `results` has at most one entry, whose bit width applies to
+    // every sample. If multi-PUB submission is added, `num_bits`
+    // becomes per-PUB and the flattening below silently merges
+    // samples from different circuits.
+    let num_bits = details
+        .results
+        .first()
+        .map(|x| x.data["meas"].num_bits)
+        .unwrap_or(0);
+    Ok(Samples {
+        samples: details
             .results
             .iter()
             .flat_map(|x| x.data["meas"].samples.iter())
             .cloned()
             .collect(),
-    ));
-    res
+        num_bits,
+    })
+}
+
+#[derive(Debug)]
+pub struct ExpectationValues(pub Vec<f64>);
+
+pub async fn get_estimator_job_results(
+    service: &Service,
+    job: &Job,
+) -> Result<ExpectationValues, ServiceError> {
+    let crn = job.instance.crn.to_str().unwrap();
+    let details = get_estimator_job_results_jid(
+        &service.quantum_config,
+        crn,
+        &job.response.id,
+        Some("2025-06-01"),
+    )
+    .await?;
+    log_debug(&format!("get_job_result response: {:?}", details));
+    Ok(ExpectationValues(
+        details.results.iter().map(|x| x.data["evs"]).collect(),
+    ))
 }
 
 pub async fn get_job_status(service: &Service, job: &Job) -> Result<JobStatus, ServiceError> {

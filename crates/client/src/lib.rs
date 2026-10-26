@@ -11,11 +11,13 @@
 // that they have been altered from the originals.
 
 mod c_api;
+pub mod counts;
 mod generate_job_params;
 pub mod generate_qpy;
 mod pointers;
 pub mod qiskit_circuit;
 mod qiskit_ffi;
+pub mod qiskit_observable;
 pub mod qiskit_target;
 mod qpy_formats;
 mod service;
