@@ -13,7 +13,7 @@ but expose that to C.
 > This library is an early prototype and is still under active development.
 > There are currently no backwards compatibility guarantees as the library
 > is developed. This library currently only supports the Qiskit minor version
-> 2.5.
+> 2.6.
 
 
 ## Getting Started

@@ -24,7 +24,9 @@ typedef struct Backend Backend;
 typedef struct BackendSearchResults BackendSearchResults;
 
 int main(int argc, char *arv[]) {
+    QkClassicalRegister *cr = qk_classical_register_new(100, "meas");
     QkCircuit *qc = qk_circuit_new(100, 100);
+    qk_circuit_add_classical_register(qc, cr);
     uint32_t qubits[1] = {
             0,
     };
@@ -110,4 +112,5 @@ int main(int argc, char *arv[]) {
     qkrt_service_free(service);
     cleanup:
     qk_circuit_free(qc);
+    qk_classical_register_free(cr);
 }

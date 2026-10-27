@@ -22,7 +22,9 @@ void build_lucj(QkCircuit *qc);
 
 int main(int argc, char *arv[]) {
     // Build an lucj circuit for fe4s4
-    QkCircuit *qc = qk_circuit_new(72, 72);
+    QkClassicalRegister *cr = qk_classical_register_new(72, "meas");
+    QkCircuit *qc = qk_circuit_new(72, 0);
+    qk_circuit_add_classical_register(qc, cr);
     build_lucj(qc);
     for (uint32_t i = 0; i < qk_circuit_num_qubits(qc); i++) {
         qk_circuit_measure(qc, i, i);
@@ -118,6 +120,7 @@ cleanup_service:
     qkrt_service_free(service);
 cleanup:
     qk_circuit_free(qc);
+    qk_classical_register_free(cr);
 }
 
 void build_lucj(QkCircuit *qc) {
