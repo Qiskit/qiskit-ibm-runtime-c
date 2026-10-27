@@ -17,7 +17,7 @@
 #include <stdio.h>
 #include <string.h>
 
-extern void generate_qpy(QkCircuit *circuit, char *filename);
+extern void generate_qpy(const QkCircuit *circuit, const char *filename);
 
 #define QPY_FILENAME "test_params.qpy"
 
