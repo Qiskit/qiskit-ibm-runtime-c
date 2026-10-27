@@ -1035,6 +1035,7 @@ version = "0.39.0"
 dependencies = [
  "base64-simd",
  "binrw",
+ "chrono",
  "flate2",
  "foldhash",
  "ibm-quantum-platform-api",
